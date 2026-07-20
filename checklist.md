@@ -1,0 +1,10 @@
+# Kotlin Spring Boot 설정 체크리스트
+
+- [x] 기존 저장소와 로컬 JDK 환경을 확인한다.
+- [x] Kotlin, Spring Boot, MySQL/JPA 기반과 최소 의존성을 결정한다.
+- [x] Gradle Kotlin DSL 설정과 실패하는 애플리케이션 진입점 테스트를 추가한다.
+- [x] Gradle Wrapper를 생성하고 테스트의 실패 원인을 확인한다.
+- [x] Kotlin Spring Boot 진입점을 추가한다.
+- [x] 전체 테스트와 실행 JAR 생성을 검증한다.
+- [ ] MySQL 환경 변수를 제공받아 DB 연결 기동을 검증한다.
+- [ ] 변경 사항을 검토하고 커밋한다.
