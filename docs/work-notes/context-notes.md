@@ -7,3 +7,4 @@
 - 2026-07-20. Spring Boot Gradle 플러그인은 BOM을 자동 적용하지 않으므로, Gradle의 기본 BOM 지원으로 `spring-boot-dependencies`를 가져온다.
 - 2026-07-20. 진입점 테스트는 먼저 `SafelenseApplication` 부재로 실패한 뒤, 최소 `@SpringBootApplication` Kotlin 클래스를 추가해 통과시킨다.
 - 2026-07-20. `./gradlew test`와 `./gradlew bootJar`는 통과했다. MySQL 접속 정보가 없어 실제 DB 연결 기동 검증은 보류한다.
+- 2026-07-20. 루트 `application.yml`은 로컬 DB 자격 증명 전용 파일로 사용하고 Git에서 제외한다. `src/main/resources/application.yml`의 공통 설정은 계속 추적한다.
