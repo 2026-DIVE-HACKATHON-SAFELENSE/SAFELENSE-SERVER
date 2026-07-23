@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class JwtTokenIssuerTests {
@@ -30,5 +31,27 @@ class JwtTokenIssuerTests {
         assertThat(refreshClaims.subject).isEqualTo("42")
         assertThat(refreshClaims["tokenType"]).isEqualTo("refresh")
         assertThat(tokens.expiresIn).isEqualTo(Duration.ofMinutes(30).seconds)
+    }
+
+    @Test
+    fun `issues a new access token from a valid refresh token`() {
+        val tokens = issuer.issue(42L)
+        val refreshed = issuer.refresh(tokens.refreshToken)
+        val key = Keys.hmacShaKeyFor(signingSecret.toByteArray(StandardCharsets.UTF_8))
+        val claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(refreshed.accessToken).payload
+
+        assertThat(claims.subject).isEqualTo("42")
+        assertThat(claims["tokenType"]).isEqualTo("access")
+        assertThat(refreshed.expiresIn).isEqualTo(Duration.ofMinutes(30).seconds)
+    }
+
+    @Test
+    fun `rejects an access token and a malformed token for refresh`() {
+        val tokens = issuer.issue(42L)
+
+        assertThatThrownBy { issuer.refresh(tokens.accessToken) }
+            .isInstanceOf(InvalidRefreshTokenException::class.java)
+        assertThatThrownBy { issuer.refresh("not-a-jwt") }
+            .isInstanceOf(InvalidRefreshTokenException::class.java)
     }
 }

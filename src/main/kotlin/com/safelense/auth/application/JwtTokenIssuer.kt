@@ -3,6 +3,7 @@ package com.safelense.auth.application
 
 import com.safelense.auth.config.JwtProperties
 import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.JwtException
 import java.time.Instant
 import java.util.Date
 import org.springframework.stereotype.Component
@@ -10,6 +11,11 @@ import org.springframework.stereotype.Component
 data class IssuedTokens(
     val accessToken: String,
     val refreshToken: String,
+    val expiresIn: Long,
+)
+
+data class IssuedAccessToken(
+    val accessToken: String,
     val expiresIn: Long,
 )
 
@@ -27,6 +33,25 @@ class JwtTokenIssuer(
         return IssuedTokens(
             accessToken = createToken(userId, "access", issuedAt, accessExpiresAt),
             refreshToken = createToken(userId, "refresh", issuedAt, refreshExpiresAt),
+            expiresIn = jwtProperties.accessTokenTtl.seconds,
+        )
+    }
+
+    fun refresh(refreshToken: String): IssuedAccessToken {
+        val claims = try {
+            Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(refreshToken).payload
+        } catch (_: JwtException) {
+            throw InvalidRefreshTokenException()
+        }
+        if (claims["tokenType"] != "refresh") {
+            throw InvalidRefreshTokenException()
+        }
+        val userId = claims.subject.toLongOrNull() ?: throw InvalidRefreshTokenException()
+        val issuedAt = Instant.now()
+        val expiresAt = issuedAt.plus(jwtProperties.accessTokenTtl)
+
+        return IssuedAccessToken(
+            accessToken = createToken(userId, "access", issuedAt, expiresAt),
             expiresIn = jwtProperties.accessTokenTtl.seconds,
         )
     }
