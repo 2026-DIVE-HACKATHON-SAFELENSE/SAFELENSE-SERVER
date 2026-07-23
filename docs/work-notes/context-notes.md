@@ -9,3 +9,4 @@
 - 2026-07-20. `./gradlew test`와 `./gradlew bootJar`는 통과했다. MySQL 접속 정보가 없어 실제 DB 연결 기동 검증은 보류한다.
 - 2026-07-20. 루트 `application.yml`은 로컬 DB 자격 증명 전용 파일로 사용하고 Git에서 제외한다. `src/main/resources/application.yml`의 공통 설정은 계속 추적한다.
 - 2026-07-23. 토큰 재발급은 저장소 없이 서명·만료·`tokenType=refresh` claim을 검증한 뒤 새 액세스 토큰만 발급한다.
+- 2026-07-23. 리프레시 토큰은 SHA-256 해시로 MySQL에 저장한다. 사용자당 활성 세션은 하나이며, 갱신마다 새 JWT 쌍으로 교체하고 로그아웃 때 삭제한다.
