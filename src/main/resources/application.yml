@@ -8,3 +8,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+  flyway:
+    enabled: true
+
+auth:
+  kakao:
+    rest-api-key: ${KAKAO_REST_API_KEY}
+    client-secret: ${KAKAO_CLIENT_SECRET}
+  jwt:
+    signing-secret: ${JWT_SECRET}
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:PT30M}
+    refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:P14D}

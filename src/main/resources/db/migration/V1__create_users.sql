@@ -1,0 +1,12 @@
+-- 카카오 로그인 사용자를 저장하는 MySQL 테이블
+CREATE TABLE users (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    kakao_id BIGINT NOT NULL,
+    nickname VARCHAR(255) NOT NULL,
+    profile_image_url VARCHAR(2048) NULL,
+    onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    CONSTRAINT uk_users_kakao_id UNIQUE (kakao_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
