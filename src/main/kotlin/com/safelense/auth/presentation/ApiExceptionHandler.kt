@@ -1,6 +1,7 @@
 // 인증 요청의 검증 오류와 카카오 연동 오류를 HTTP 응답으로 변환하는 처리기
 package com.safelense.auth.presentation
 
+import com.safelense.analysis.InvalidAnalysisStageException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
@@ -21,6 +22,10 @@ data class ApiError(
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+    @ExceptionHandler(InvalidAnalysisStageException::class)
+    fun handleInvalidAnalysisStage(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_STAGE", "Analysis stage is invalid.")
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidationFailure(): ResponseEntity<ApiError> = error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Request is invalid.")
 
