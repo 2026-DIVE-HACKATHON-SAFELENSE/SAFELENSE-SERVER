@@ -183,6 +183,52 @@ class NotificationServiceTests {
         verifyNoInteractions(repository)
     }
 
+    @Test
+    fun `marks an unread notification as read`() {
+        `when`(repository.markAsReadIfUnread(eqLong(7L), eqLong(11L), anyInstant())).thenReturn(1)
+
+        service.read(userId = 7L, notificationId = 11L)
+
+        verify(repository).markAsReadIfUnread(eqLong(7L), eqLong(11L), anyInstant())
+        verify(repository, never()).existsByIdAndUserId(11L, 7L)
+    }
+
+    @Test
+    fun `succeeds when a notification already read by its owner is read again`() {
+        `when`(repository.markAsReadIfUnread(eqLong(7L), eqLong(11L), anyInstant())).thenReturn(0)
+        `when`(repository.existsByIdAndUserId(11L, 7L)).thenReturn(true)
+
+        service.read(userId = 7L, notificationId = 11L)
+
+        verify(repository).markAsReadIfUnread(eqLong(7L), eqLong(11L), anyInstant())
+        verify(repository).existsByIdAndUserId(11L, 7L)
+    }
+
+    @Test
+    fun `throws when the notification does not exist`() {
+        `when`(repository.markAsReadIfUnread(eqLong(7L), eqLong(11L), anyInstant())).thenReturn(0)
+        `when`(repository.existsByIdAndUserId(11L, 7L)).thenReturn(false)
+
+        assertThatThrownBy { service.read(userId = 7L, notificationId = 11L) }
+            .isInstanceOf(NotificationNotFoundException::class.java)
+    }
+
+    @Test
+    fun `throws when the notification belongs to another user`() {
+        `when`(repository.markAsReadIfUnread(eqLong(7L), eqLong(11L), anyInstant())).thenReturn(0)
+        `when`(repository.existsByIdAndUserId(11L, 7L)).thenReturn(false)
+
+        assertThatThrownBy { service.read(userId = 7L, notificationId = 11L) }
+            .isInstanceOf(NotificationNotFoundException::class.java)
+    }
+
+    @Test
+    fun `marks all unread notifications as read even when none exist`() {
+        service.readAll(userId = 7L)
+
+        verify(repository).markAllAsReadIfUnread(eqLong(7L), anyInstant())
+    }
+
     private fun assertRejected(command: NotificationCreateCommand) {
         assertThatThrownBy { service.create(7L, command) }
             .isInstanceOf(InvalidNotificationRequestException::class.java)
@@ -220,4 +266,14 @@ class NotificationServiceTests {
             readAt = readAt,
             createdAt = Instant.parse("2026-07-20T09:00:00Z"),
         )
+
+    private fun anyInstant(): Instant {
+        any(Instant::class.java)
+        return Instant.EPOCH
+    }
+
+    private fun eqLong(value: Long): Long {
+        org.mockito.ArgumentMatchers.eq(value)
+        return value
+    }
 }

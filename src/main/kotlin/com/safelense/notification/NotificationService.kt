@@ -16,6 +16,8 @@ data class NotificationCreateCommand(
 
 class InvalidNotificationRequestException : RuntimeException()
 
+class NotificationNotFoundException : RuntimeException()
+
 data class NotificationItem(
     val id: Long,
     val type: NotificationType,
@@ -95,5 +97,18 @@ class NotificationService(
             hasNext = hasNext,
             unreadCount = notificationRepository.countByUserIdAndReadAtIsNull(userId),
         )
+    }
+
+    @Transactional
+    fun read(userId: Long, notificationId: Long) {
+        val updatedCount = notificationRepository.markAsReadIfUnread(userId, notificationId, Instant.now())
+        if (updatedCount == 0 && !notificationRepository.existsByIdAndUserId(notificationId, userId)) {
+            throw NotificationNotFoundException()
+        }
+    }
+
+    @Transactional
+    fun readAll(userId: Long) {
+        notificationRepository.markAllAsReadIfUnread(userId, Instant.now())
     }
 }
