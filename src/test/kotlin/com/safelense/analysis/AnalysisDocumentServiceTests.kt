@@ -15,9 +15,11 @@ import org.springframework.mock.web.MockMultipartFile
 class AnalysisDocumentServiceTests {
     private val caseRepository = mock(AnalysisCaseRepository::class.java)
     private val documentRepository = mock(AnalysisDocumentRepository::class.java)
+    private val resultRepository = mock(AnalysisResultRepository::class.java)
     private val service = AnalysisDocumentService(
         caseRepository,
         documentRepository,
+        resultRepository,
         AnalysisTemplateCatalog(),
     )
 
@@ -200,6 +202,22 @@ class AnalysisDocumentServiceTests {
 
         verify(documentRepository).deleteByIdAndCaseId(21L, 11L)
         verifyNoMoreInteractions(documentRepository)
+    }
+
+    @Test
+    fun `rejects upload and delete after the case was analyzed`() {
+        `when`(caseRepository.findByIdAndUserIdForUpdate(11L, 7L)).thenReturn(analysisCase())
+        `when`(resultRepository.existsByCaseId(11L)).thenReturn(true)
+        val file = MockMultipartFile("file", "registry.pdf", "application/pdf", "pdf".toByteArray())
+
+        assertThatThrownBy {
+            service.upload(7L, 11L, "REGISTRY_CERTIFICATE", file)
+        }.isInstanceOf(AnalysisCaseLockedException::class.java)
+        assertThatThrownBy {
+            service.delete(7L, 11L, 21L)
+        }.isInstanceOf(AnalysisCaseLockedException::class.java)
+
+        verifyNoInteractions(documentRepository)
     }
 
     private fun assertInvalid(documentType: String, file: MockMultipartFile) {

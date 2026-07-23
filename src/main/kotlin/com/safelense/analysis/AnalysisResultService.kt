@@ -86,26 +86,26 @@ class AnalysisResultService(
             summary = summary,
             analyzedAt = analyzedAt,
         )
-
-    private fun AnalysisResult.toDetail(): AnalysisResultDetail =
-        AnalysisResultDetail(
-            id = requireNotNull(id),
-            caseId = caseId,
-            propertyId = propertyId,
-            stage = stage,
-            score = score,
-            grade = grade,
-            confidence = confidence,
-            summary = summary,
-            findings = findings.toItems(),
-            recommendations = recommendations.toItems(),
-            ruleVersion = ruleVersion,
-            analyzedAt = analyzedAt,
-        )
-
-    private fun String.toItems(): List<String> =
-        lineSequence()
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-            .toList()
 }
+
+internal fun AnalysisResult.toDetail(): AnalysisResultDetail =
+    AnalysisResultDetail(
+        id = requireNotNull(id),
+        caseId = caseId,
+        propertyId = propertyId,
+        stage = stage,
+        score = score,
+        grade = grade,
+        confidence = confidence,
+        summary = summary,
+        findings = findings.toItems(),
+        recommendations = recommendations.toItems(),
+        ruleVersion = ruleVersion,
+        analyzedAt = analyzedAt,
+    )
+
+private fun String.toItems(): List<String> =
+    lineSequence()
+        .map(String::trim)
+        .filter(String::isNotEmpty)
+        .toList()

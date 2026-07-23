@@ -11,5 +11,7 @@ class AnalysisResultRepositoryContractTests {
 
         assertThat(methodNames).contains("findByUserIdWithCursor")
         assertThat(methodNames).contains("findByIdAndUserId")
+        assertThat(methodNames).contains("findByCaseId")
+        assertThat(methodNames).contains("existsByCaseId")
     }
 }

@@ -25,6 +25,7 @@ data class AnalysisDocumentUploadResult(
 class AnalysisDocumentService(
     private val caseRepository: AnalysisCaseRepository,
     private val documentRepository: AnalysisDocumentRepository,
+    private val resultRepository: AnalysisResultRepository,
     private val catalog: AnalysisTemplateCatalog,
 ) {
     @Transactional
@@ -36,6 +37,7 @@ class AnalysisDocumentService(
     ): AnalysisDocumentUploadResult {
         val analysisCase = caseRepository.findByIdAndUserIdForUpdate(caseId, userId)
             ?: throw AnalysisCaseNotFoundException()
+        if (resultRepository.existsByCaseId(caseId)) throw AnalysisCaseLockedException()
         val fileName = file.originalFilename?.trim().orEmpty()
         val mimeType = file.contentType.orEmpty()
         if (!catalog.supportsDocument(analysisCase.stage, documentType) ||
@@ -74,6 +76,7 @@ class AnalysisDocumentService(
     fun delete(userId: Long, caseId: Long, documentId: Long) {
         caseRepository.findByIdAndUserIdForUpdate(caseId, userId)
             ?: throw AnalysisCaseNotFoundException()
+        if (resultRepository.existsByCaseId(caseId)) throw AnalysisCaseLockedException()
         if (documentRepository.deleteByIdAndCaseId(documentId, caseId) == 0) {
             throw AnalysisDocumentNotFoundException()
         }

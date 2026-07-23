@@ -13,6 +13,7 @@ data class AnalysisChecklistAnswerCommand(
 class AnalysisChecklistService(
     private val caseRepository: AnalysisCaseRepository,
     private val answerRepository: AnalysisChecklistAnswerRepository,
+    private val resultRepository: AnalysisResultRepository,
     private val catalog: AnalysisTemplateCatalog,
 ) {
     @Transactional
@@ -23,6 +24,7 @@ class AnalysisChecklistService(
     ): List<AnalysisChecklistAnswerView> {
         val analysisCase = caseRepository.findByIdAndUserIdForUpdate(caseId, userId)
             ?: throw AnalysisCaseNotFoundException()
+        if (resultRepository.existsByCaseId(caseId)) throw AnalysisCaseLockedException()
         val requestKeys = answers.map { it.itemKey }
         val allowedKeys = catalog.itemKeys(analysisCase.stage)
         if (requestKeys.distinct().size != requestKeys.size || requestKeys.any { it !in allowedKeys }) {

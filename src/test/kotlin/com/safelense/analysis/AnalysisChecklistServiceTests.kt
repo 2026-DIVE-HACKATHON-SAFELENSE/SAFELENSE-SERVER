@@ -15,9 +15,11 @@ import org.mockito.Mockito.`when`
 class AnalysisChecklistServiceTests {
     private val caseRepository = mock(AnalysisCaseRepository::class.java)
     private val answerRepository = mock(AnalysisChecklistAnswerRepository::class.java)
+    private val resultRepository = mock(AnalysisResultRepository::class.java)
     private val service = AnalysisChecklistService(
         caseRepository,
         answerRepository,
+        resultRepository,
         AnalysisTemplateCatalog(),
     )
 
@@ -119,6 +121,22 @@ class AnalysisChecklistServiceTests {
                 listOf(AnalysisChecklistAnswerCommand("VISITED_PROPERTY", true)),
             )
         }.isInstanceOf(AnalysisCaseNotFoundException::class.java)
+
+        verifyNoInteractions(answerRepository)
+    }
+
+    @Test
+    fun `rejects checklist replacement after the case was analyzed`() {
+        `when`(caseRepository.findByIdAndUserIdForUpdate(11L, 7L)).thenReturn(analysisCase())
+        `when`(resultRepository.existsByCaseId(11L)).thenReturn(true)
+
+        assertThatThrownBy {
+            service.replace(
+                7L,
+                11L,
+                listOf(AnalysisChecklistAnswerCommand("VISITED_PROPERTY", true)),
+            )
+        }.isInstanceOf(AnalysisCaseLockedException::class.java)
 
         verifyNoInteractions(answerRepository)
     }

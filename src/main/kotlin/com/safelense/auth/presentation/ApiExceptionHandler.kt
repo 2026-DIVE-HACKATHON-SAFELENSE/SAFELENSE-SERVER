@@ -2,9 +2,12 @@
 package com.safelense.auth.presentation
 
 import com.safelense.analysis.AnalysisCaseNotFoundException
+import com.safelense.analysis.AnalysisAlreadyCompletedException
+import com.safelense.analysis.AnalysisCaseLockedException
 import com.safelense.analysis.AnalysisDocumentNotFoundException
 import com.safelense.analysis.AnalysisDocumentTooLargeException
 import com.safelense.analysis.AnalysisResultNotFoundException
+import com.safelense.analysis.InvalidAnalysisExecutionRequestException
 import com.safelense.analysis.InvalidAnalysisChecklistException
 import com.safelense.analysis.InvalidAnalysisDocumentException
 import com.safelense.analysis.InvalidAnalysisResultRequestException
@@ -44,6 +47,18 @@ class ApiExceptionHandler {
     @ExceptionHandler(AnalysisResultNotFoundException::class)
     fun handleAnalysisResultNotFound(): ResponseEntity<ApiError> =
         error(HttpStatus.NOT_FOUND, "ANALYSIS_NOT_FOUND", "Analysis result was not found.")
+
+    @ExceptionHandler(InvalidAnalysisExecutionRequestException::class)
+    fun handleInvalidAnalysisExecutionRequest(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Request is invalid.")
+
+    @ExceptionHandler(AnalysisAlreadyCompletedException::class)
+    fun handleAnalysisAlreadyCompleted(): ResponseEntity<ApiError> =
+        error(HttpStatus.CONFLICT, "ANALYSIS_ALREADY_COMPLETED", "Analysis case was already analyzed.")
+
+    @ExceptionHandler(AnalysisCaseLockedException::class)
+    fun handleAnalysisCaseLocked(): ResponseEntity<ApiError> =
+        error(HttpStatus.CONFLICT, "ANALYSIS_CASE_LOCKED", "Analysis case inputs are locked.")
 
     @ExceptionHandler(InvalidAnalysisChecklistException::class)
     fun handleInvalidAnalysisChecklist(): ResponseEntity<ApiError> =

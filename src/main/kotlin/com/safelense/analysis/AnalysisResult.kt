@@ -47,6 +47,10 @@ class AnalysisResult(
     val recommendations: String,
     @Column(name = "rule_version", nullable = false, length = 32)
     val ruleVersion: String,
+    @Column(name = "idempotency_key", length = 100)
+    val idempotencyKey: String? = null,
+    @Column(name = "input_snapshot", columnDefinition = "TEXT")
+    val inputSnapshot: String? = null,
     @Column(name = "analyzed_at", nullable = false)
     val analyzedAt: Instant,
 )

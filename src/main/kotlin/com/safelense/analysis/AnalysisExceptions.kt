@@ -14,3 +14,9 @@ class InvalidAnalysisChecklistException : RuntimeException()
 class InvalidAnalysisResultRequestException : RuntimeException()
 
 class AnalysisResultNotFoundException : RuntimeException()
+
+class InvalidAnalysisExecutionRequestException : RuntimeException()
+
+class AnalysisAlreadyCompletedException : RuntimeException()
+
+class AnalysisCaseLockedException : RuntimeException()

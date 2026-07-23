@@ -24,4 +24,8 @@ interface AnalysisResultRepository : JpaRepository<AnalysisResult, Long> {
     ): List<AnalysisResult>
 
     fun findByIdAndUserId(id: Long, userId: Long): AnalysisResult?
+
+    fun findByCaseId(caseId: Long): AnalysisResult?
+
+    fun existsByCaseId(caseId: Long): Boolean
 }
