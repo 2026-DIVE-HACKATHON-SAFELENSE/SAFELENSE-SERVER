@@ -49,3 +49,8 @@
 - 2026-07-24. `./gradlew test --tests 'com.safelense.notification.*'`, `./gradlew test`, 권한 확장 환경에서 재실행한 `./gradlew bootJar`가 모두 `BUILD SUCCESSFUL`로 통과했다. 최초 `bootJar`는 Gradle wrapper 캐시 잠금 파일 접근이 샌드박스에서 거부되어 재실행했다.
 - 2026-07-24. `git diff --check`와 `6b0d8d59370a42c8854f7a6204a6f27f2af7a906..HEAD` 전체 diff를 읽기 전용으로 검토했다. 공백 오류, 범위 이탈, 명백한 오류는 발견하지 못했다.
 - 2026-07-24. 실제 MySQL에서 Flyway V5 적용, 알림 읽음 조건부 bulk update와 모두 읽음 bulk update를 검증하는 통합 테스트는 DB 환경이 제공되지 않아 실행하지 못했다.
+- 2026-07-24. 노션에서 미완료 항목으로 분석 실행 1개, 분석 이력·리포트 3개, 사용자 2개를 확인했다.
+- 2026-07-24. 사용자 결정에 따라 `POST /api/v1/analysis-cases/{caseId}/analyze`와 위험 규칙 계산은 이번 작업에서 제외한다.
+- 2026-07-24. 이번 범위는 저장된 분석 결과의 목록·상세·PDF와 내 정보 조회·온보딩 상태 변경 API 5개다.
+- 2026-07-24. 분석 결과 생성 경로는 만들지 않지만 향후 분석 실행이 사용할 `analysis_results` 저장 모델은 먼저 추가한다.
+- 2026-07-24. PDF는 DB에 저장하지 않고 저장 결과에서 요청 시 생성하며, 별도 HTML 렌더러 없이 OpenPDF 3.0.5만 사용한다.
