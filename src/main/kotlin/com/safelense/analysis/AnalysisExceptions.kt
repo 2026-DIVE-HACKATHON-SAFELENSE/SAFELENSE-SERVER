@@ -10,3 +10,7 @@ class AnalysisDocumentTooLargeException : RuntimeException()
 class AnalysisDocumentNotFoundException : RuntimeException()
 
 class InvalidAnalysisChecklistException : RuntimeException()
+
+class InvalidAnalysisResultRequestException : RuntimeException()
+
+class AnalysisResultNotFoundException : RuntimeException()
