@@ -18,3 +18,9 @@
 - 2026-07-24. Spring Boot 4의 HTTP 메시지 변환기와 맞추기 위해 Merge Patch 본문은 Jackson 3의 `tools.jackson.databind.JsonNode`로 파싱한다.
 - 2026-07-24. 동시 최초 등록은 DB 유니크 제약을 최종 기준으로 삼고, `saveAndFlush`에서 발생한 제약 위반을 `PROPERTY_ALREADY_EXISTS`로 변환한다.
 - 2026-07-24. `./gradlew test --tests 'com.safelense.property.*'`, `./gradlew test`, `./gradlew bootJar`가 모두 통과했다.
+- 2026-07-24. 분석 케이스 기능은 노션 API 명세를 따르되 화면과 충돌하면 사용자가 제공한 사진을 우선한다.
+- 2026-07-24. 분석 단계는 계약 전·중·후이며 각 단계는 서류 슬롯 6개와 탭형 체크리스트를 제공한다.
+- 2026-07-24. 서류나 체크리스트가 비어 있거나 일부만 입력돼도 위험 분석을 허용한다. 누락값은 안전으로 계산하지 않으며 근거가 없으면 `score=null`, `grade=UNKNOWN`, `confidence=0`을 반환한다.
+- 2026-07-24. 실제 AI 모델이나 외부 데이터 API 대신 연습 데이터에서 정리한 버전형 규칙 카탈로그로 위험 점수·등급·근거·권고사항을 결정한다.
+- 2026-07-24. 업로드 문서는 MVP에서 파일당 10MiB로 제한해 MySQL `MEDIUMBLOB`에 저장하고, 문서 내용이 아니라 슬롯별 제출 여부만 위험 분석 입력으로 사용한다.
+- 2026-07-24. 분석 완료 후 입력은 잠그며 `Idempotency-Key`가 같은 재요청에는 저장된 결과를 반환한다.
