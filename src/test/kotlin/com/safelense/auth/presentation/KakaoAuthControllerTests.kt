@@ -91,7 +91,7 @@ class KakaoAuthControllerTests {
     @Test
     fun `returns a new access token for a valid refresh token`() {
         `when`(tokenRefreshService.refresh("refresh-token"))
-            .thenReturn(TokenRefreshResult("new-access-token", 1800))
+            .thenReturn(TokenRefreshResult("new-access-token", "new-refresh-token", 1800))
 
         mockMvc.perform(
             post("/api/v1/auth/refresh")
@@ -100,6 +100,7 @@ class KakaoAuthControllerTests {
         )
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.accessToken").value("new-access-token"))
+            .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"))
             .andExpect(jsonPath("$.tokenType").value("Bearer"))
             .andExpect(jsonPath("$.expiresIn").value(1800))
     }

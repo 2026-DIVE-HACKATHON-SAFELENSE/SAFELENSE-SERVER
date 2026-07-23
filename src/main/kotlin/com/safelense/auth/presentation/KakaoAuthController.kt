@@ -33,6 +33,7 @@ class KakaoLoginResponse(
 
 data class TokenRefreshResponse(
     val accessToken: String,
+    val refreshToken: String,
     val tokenType: String = "Bearer",
     val expiresIn: Long,
 )
@@ -59,6 +60,6 @@ class KakaoAuthController(
     @ResponseStatus(HttpStatus.OK)
     fun refresh(@Valid @RequestBody request: TokenRefreshRequest): TokenRefreshResponse {
         val result = tokenRefreshService.refresh(request.refreshToken)
-        return TokenRefreshResponse(result.accessToken, expiresIn = result.expiresIn)
+        return TokenRefreshResponse(result.accessToken, result.refreshToken, expiresIn = result.expiresIn)
     }
 }

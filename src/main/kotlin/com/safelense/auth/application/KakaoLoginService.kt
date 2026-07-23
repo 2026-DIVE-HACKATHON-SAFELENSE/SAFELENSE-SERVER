@@ -2,6 +2,7 @@
 package com.safelense.auth.application
 
 import com.safelense.auth.kakao.KakaoApiClient
+import com.safelense.auth.token.RefreshTokenStore
 import com.safelense.user.User
 import com.safelense.user.UserRepository
 import org.springframework.stereotype.Service
@@ -18,6 +19,7 @@ class KakaoLoginService(
     private val kakaoApiClient: KakaoApiClient,
     private val userRepository: UserRepository,
     private val tokenIssuer: JwtTokenIssuer,
+    private val refreshTokenStore: RefreshTokenStore,
 ) {
     fun login(authorizationCode: String, redirectUri: String): KakaoLoginResult {
         val kakaoUser = kakaoApiClient.getUser(authorizationCode, redirectUri)
@@ -30,6 +32,7 @@ class KakaoLoginService(
             ),
         )
         val tokens = tokenIssuer.issue(requireNotNull(user.id))
+        refreshTokenStore.save(requireNotNull(user.id), tokens.refreshToken, tokens.refreshTokenExpiresAt)
 
         return KakaoLoginResult(
             accessToken = tokens.accessToken,

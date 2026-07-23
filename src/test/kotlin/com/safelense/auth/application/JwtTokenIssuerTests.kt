@@ -34,24 +34,20 @@ class JwtTokenIssuerTests {
     }
 
     @Test
-    fun `issues a new access token from a valid refresh token`() {
+    fun `returns the user ID from a valid refresh token`() {
         val tokens = issuer.issue(42L)
-        val refreshed = issuer.refresh(tokens.refreshToken)
-        val key = Keys.hmacShaKeyFor(signingSecret.toByteArray(StandardCharsets.UTF_8))
-        val claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(refreshed.accessToken).payload
+        val userId = issuer.validateRefreshToken(tokens.refreshToken)
 
-        assertThat(claims.subject).isEqualTo("42")
-        assertThat(claims["tokenType"]).isEqualTo("access")
-        assertThat(refreshed.expiresIn).isEqualTo(Duration.ofMinutes(30).seconds)
+        assertThat(userId).isEqualTo(42L)
     }
 
     @Test
     fun `rejects an access token and a malformed token for refresh`() {
         val tokens = issuer.issue(42L)
 
-        assertThatThrownBy { issuer.refresh(tokens.accessToken) }
+        assertThatThrownBy { issuer.validateRefreshToken(tokens.accessToken) }
             .isInstanceOf(InvalidRefreshTokenException::class.java)
-        assertThatThrownBy { issuer.refresh("not-a-jwt") }
+        assertThatThrownBy { issuer.validateRefreshToken("not-a-jwt") }
             .isInstanceOf(InvalidRefreshTokenException::class.java)
     }
 }
