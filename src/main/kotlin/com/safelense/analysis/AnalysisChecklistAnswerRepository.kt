@@ -2,8 +2,14 @@
 package com.safelense.analysis
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface AnalysisChecklistAnswerRepository : JpaRepository<AnalysisChecklistAnswer, Long> {
     fun findAllByCaseId(caseId: Long): List<AnalysisChecklistAnswer>
-    fun deleteAllByCaseId(caseId: Long)
+
+    @Modifying
+    @Query("delete from AnalysisChecklistAnswer answer where answer.caseId = :caseId")
+    fun deleteAllByCaseId(@Param("caseId") caseId: Long): Int
 }

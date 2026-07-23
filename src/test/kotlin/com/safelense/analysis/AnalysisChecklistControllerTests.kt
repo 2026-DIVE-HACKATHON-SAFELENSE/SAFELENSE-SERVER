@@ -5,6 +5,7 @@ import com.safelense.auth.presentation.ApiExceptionHandler
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
@@ -72,5 +73,18 @@ class AnalysisChecklistControllerTests {
         )
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.code").value("INVALID_CHECKLIST"))
+    }
+
+    @Test
+    fun `rejects a blank item key before calling the service`() {
+        mockMvc.perform(
+            put("/api/v1/analysis-cases/11/checklist")
+                .principal(UsernamePasswordAuthenticationToken(7L, null))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"answers":[{"itemKey":"","checked":true}]}"""),
+        )
+            .andExpect(status().isBadRequest)
+
+        verifyNoInteractions(service)
     }
 }

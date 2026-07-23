@@ -1,0 +1,22 @@
+// 분석 입력 저장소가 BLOB 비로딩과 즉시 bulk 변경 계약을 지키는지 검증하는 테스트
+package com.safelense.analysis
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+
+class AnalysisRepositoryContractTests {
+    @Test
+    fun `checklist replacement uses an explicit bulk delete`() {
+        val method = AnalysisChecklistAnswerRepository::class.java.getMethod(
+            "deleteAllByCaseId",
+            Long::class.javaPrimitiveType,
+        )
+
+        assertThat(method.getAnnotation(Modifying::class.java)).isNotNull()
+        assertThat(method.getAnnotation(Query::class.java)?.value)
+            .contains("delete from AnalysisChecklistAnswer")
+        assertThat(method.returnType).isEqualTo(Int::class.javaPrimitiveType)
+    }
+}
