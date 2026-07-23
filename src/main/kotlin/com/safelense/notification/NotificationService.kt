@@ -13,7 +13,7 @@ data class NotificationCreateCommand(
     val targetId: String? = null,
 )
 
-class InvalidNotificationCreateCommandException : RuntimeException()
+class InvalidNotificationRequestException : RuntimeException()
 
 @Service
 class NotificationService(
@@ -23,11 +23,12 @@ class NotificationService(
     fun create(userId: Long, command: NotificationCreateCommand): Notification {
         val title = command.title.trim()
         val body = command.body.trim()
+        val targetId = command.targetId?.trim()
         if (title.isEmpty() || title.length > 150 || body.isEmpty() || body.length > 1000) {
-            throw InvalidNotificationCreateCommandException()
+            throw InvalidNotificationRequestException()
         }
-        if ((command.targetType == null) != (command.targetId == null)) {
-            throw InvalidNotificationCreateCommandException()
+        if ((command.targetType == null) != (targetId == null) || targetId?.isEmpty() == true) {
+            throw InvalidNotificationRequestException()
         }
 
         return notificationRepository.save(
@@ -37,7 +38,7 @@ class NotificationService(
                 title = title,
                 body = body,
                 targetType = command.targetType,
-                targetId = command.targetId,
+                targetId = targetId,
                 createdAt = Instant.now(),
             ),
         )

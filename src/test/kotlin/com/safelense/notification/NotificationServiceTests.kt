@@ -28,7 +28,7 @@ class NotificationServiceTests {
                 title = "  분석이 완료되었어요  ",
                 body = "  결과를 확인해 보세요.  ",
                 targetType = NotificationTargetType.ANALYSIS_RESULT,
-                targetId = "analysis-12",
+                targetId = "  analysis-12  ",
             ),
         )
 
@@ -79,9 +79,29 @@ class NotificationServiceTests {
         assertRejected(command(targetType = null, targetId = "analysis-12"))
     }
 
+    @Test
+    fun `rejects an empty target id`() {
+        assertRejected(
+            command(
+                targetType = NotificationTargetType.ANALYSIS_RESULT,
+                targetId = "",
+            ),
+        )
+    }
+
+    @Test
+    fun `rejects a blank target id`() {
+        assertRejected(
+            command(
+                targetType = NotificationTargetType.ANALYSIS_RESULT,
+                targetId = "  ",
+            ),
+        )
+    }
+
     private fun assertRejected(command: NotificationCreateCommand) {
         assertThatThrownBy { service.create(7L, command) }
-            .isInstanceOf(InvalidNotificationCreateCommandException::class.java)
+            .isInstanceOf(InvalidNotificationRequestException::class.java)
         verify(repository, never()).save(any(Notification::class.java))
     }
 
