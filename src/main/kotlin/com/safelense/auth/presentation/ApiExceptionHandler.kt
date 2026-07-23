@@ -10,6 +10,8 @@ import com.safelense.analysis.InvalidAnalysisStageException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
+import com.safelense.notification.InvalidNotificationRequestException
+import com.safelense.notification.NotificationNotFoundException
 import com.safelense.property.HomePropertyAlreadyExistsException
 import com.safelense.property.HomePropertyNotFoundException
 import com.safelense.property.InvalidHomePropertyRequestException
@@ -65,6 +67,14 @@ class ApiExceptionHandler {
     @ExceptionHandler(HomePropertyNotFoundException::class)
     fun handleHomePropertyNotFound(): ResponseEntity<ApiError> =
         error(HttpStatus.NOT_FOUND, "PROPERTY_NOT_FOUND", "Property was not found.")
+
+    @ExceptionHandler(InvalidNotificationRequestException::class)
+    fun handleInvalidNotificationRequest(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Request is invalid.")
+
+    @ExceptionHandler(NotificationNotFoundException::class)
+    fun handleNotificationNotFound(): ResponseEntity<ApiError> =
+        error(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND", "Notification was not found.")
 
     @ExceptionHandler(KakaoAuthenticationException::class)
     fun handleKakaoAuthenticationFailure(): ResponseEntity<ApiError> =
