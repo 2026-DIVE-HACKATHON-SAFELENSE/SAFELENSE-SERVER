@@ -19,4 +19,22 @@ class AnalysisRepositoryContractTests {
             .contains("delete from AnalysisChecklistAnswer")
         assertThat(method.returnType).isEqualTo(Int::class.javaPrimitiveType)
     }
+
+    @Test
+    fun `case detail document query selects metadata without content`() {
+        val method = AnalysisDocumentRepository::class.java.methods
+            .find { it.name == "findAllMetadataByCaseId" }
+
+        assertThat(method).isNotNull()
+        assertThat(method?.genericReturnType?.typeName).contains("AnalysisDocumentMetadata")
+        assertThat(method?.getAnnotation(Query::class.java)?.value)
+            .contains(
+                "document.id",
+                "document.documentType",
+                "document.originalFileName",
+                "document.mimeType",
+                "document.fileSize",
+            )
+            .doesNotContain("document.content")
+    }
 }

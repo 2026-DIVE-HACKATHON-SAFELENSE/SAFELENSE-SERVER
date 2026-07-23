@@ -77,7 +77,7 @@ class AnalysisCaseService(
         val analysisCase = caseRepository.findByIdAndUserId(caseId, userId)
             ?: throw AnalysisCaseNotFoundException()
         val template = catalog.get(analysisCase.stage)
-        val documents = documentRepository.findAllByCaseId(caseId).associateBy { it.documentType }
+        val documents = documentRepository.findAllMetadataByCaseId(caseId).associateBy { it.documentType }
         val answers = answerRepository.findAllByCaseId(caseId).associateBy { it.itemKey }
         return AnalysisCaseView(
             id = requireNotNull(analysisCase.id),

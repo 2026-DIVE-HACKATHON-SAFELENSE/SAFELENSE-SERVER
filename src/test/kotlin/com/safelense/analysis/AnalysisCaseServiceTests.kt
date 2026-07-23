@@ -13,6 +13,7 @@ import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockingDetails
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -65,7 +66,7 @@ class AnalysisCaseServiceTests {
     @Test
     fun `returns six empty document slots and saved answers`() {
         `when`(caseRepository.findByIdAndUserId(11L, 7L)).thenReturn(analysisCase())
-        `when`(documentRepository.findAllByCaseId(11L)).thenReturn(emptyList())
+        `when`(documentRepository.findAllMetadataByCaseId(11L)).thenReturn(emptyList())
         `when`(answerRepository.findAllByCaseId(11L)).thenReturn(emptyList())
 
         val result = service.get(7L, 11L)
@@ -76,9 +77,21 @@ class AnalysisCaseServiceTests {
     }
 
     @Test
+    fun `reads case document slots through metadata only`() {
+        `when`(caseRepository.findByIdAndUserId(11L, 7L)).thenReturn(analysisCase())
+        `when`(answerRepository.findAllByCaseId(11L)).thenReturn(emptyList())
+
+        service.get(7L, 11L)
+
+        assertThat(
+            mockingDetails(documentRepository).invocations.map { it.method.name },
+        ).containsExactly("findAllMetadataByCaseId")
+    }
+
+    @Test
     fun `merges partial inputs in catalog order and preserves unchecked answers`() {
         `when`(caseRepository.findByIdAndUserId(11L, 7L)).thenReturn(analysisCase())
-        `when`(documentRepository.findAllByCaseId(11L)).thenReturn(
+        `when`(documentRepository.findAllMetadataByCaseId(11L)).thenReturn(
             listOf(
                 document("MANAGEMENT_FEE_STATEMENT", "관리비.pdf"),
                 document("REGISTRY_CERTIFICATE", "등기부.pdf"),
@@ -126,7 +139,7 @@ class AnalysisCaseServiceTests {
             .isInstanceOf(AnalysisCaseNotFoundException::class.java)
 
         verify(caseRepository).findByIdAndUserId(11L, 7L)
-        verify(documentRepository, never()).findAllByCaseId(anyLong())
+        verify(documentRepository, never()).findAllMetadataByCaseId(anyLong())
         verify(answerRepository, never()).findAllByCaseId(anyLong())
     }
 
@@ -150,15 +163,13 @@ class AnalysisCaseServiceTests {
             templateVersion = ANALYSIS_TEMPLATE_VERSION,
         )
 
-    private fun document(documentType: String, originalFileName: String): AnalysisDocument =
-        AnalysisDocument(
+    private fun document(documentType: String, originalFileName: String): AnalysisDocumentMetadata =
+        AnalysisDocumentMetadata(
             id = 101L,
-            caseId = 11L,
             documentType = documentType,
             originalFileName = originalFileName,
             mimeType = "application/pdf",
             fileSize = 1024L,
-            content = byteArrayOf(1),
         )
 
     private fun answer(itemKey: String, checked: Boolean): AnalysisChecklistAnswer =
