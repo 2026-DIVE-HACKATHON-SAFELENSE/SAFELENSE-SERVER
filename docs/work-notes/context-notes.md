@@ -54,3 +54,6 @@
 - 2026-07-24. 이번 범위는 저장된 분석 결과의 목록·상세·PDF와 내 정보 조회·온보딩 상태 변경 API 5개다.
 - 2026-07-24. 분석 결과 생성 경로는 만들지 않지만 향후 분석 실행이 사용할 `analysis_results` 저장 모델은 먼저 추가한다.
 - 2026-07-24. PDF는 DB에 저장하지 않고 저장 결과에서 요청 시 생성하며, 별도 HTML 렌더러 없이 OpenPDF 3.0.5만 사용한다.
+- 2026-07-24. 서버 폰트 설치 여부에 따라 한글이 깨지는 문제를 피하려고 Nanum Gothic Coding WebJar의 TTF를 PDF에 임베드한다. 렌더링한 A4 한 페이지에서 한글과 레이아웃을 직접 확인했다.
+- 2026-07-24. `./gradlew test --tests 'com.safelense.analysis.*' --tests 'com.safelense.user.*' --rerun-tasks`와 `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다. `git diff --check`도 오류 없이 통과했다.
+- 2026-07-24. 전체 변경 범위를 자체 리뷰해 분석 실행 API가 추가되지 않았고, 조회와 PDF가 인증 사용자 ID를 조건으로 사용하며, 새 API 외의 기존 기능을 변경하지 않았음을 확인했다.

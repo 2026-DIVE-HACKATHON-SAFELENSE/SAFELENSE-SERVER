@@ -6,7 +6,7 @@
 
 **Architecture:** `analysis_results`를 향후 분석 실행과 현재 조회 API가 공유하는 불변 결과 저장소로 둔다. 조회 서비스는 사용자 ID를 모든 쿼리에 포함하고, PDF 서비스는 상세 결과를 요청 시 문서로 변환한다. 사용자 API는 기존 `UserRepository`와 `users.onboarding_completed`를 그대로 사용한다.
 
-**Tech Stack:** Kotlin 2.3.10, JVM 24, Spring Boot 4.1.0, Spring MVC, Spring Security, Spring Data JPA, Flyway, MySQL, OpenPDF 3.0.5, JUnit 5, Mockito.
+**Tech Stack:** Kotlin 2.3.10, JVM 24, Spring Boot 4.1.0, Spring MVC, Spring Security, Spring Data JPA, Flyway, MySQL, OpenPDF 3.0.5, Nanum Gothic Coding WebJar 4.0.0, JUnit 5, Mockito.
 
 ## Global Constraints
 
@@ -17,7 +17,7 @@
 - 모든 결과 조회와 PDF 다운로드는 인증 사용자 ID로 격리한다.
 - PDF BLOB을 저장하지 않고 요청 시 저장 결과에서 생성한다.
 - 사용자 API는 기존 `users` 테이블만 사용한다.
-- OpenPDF 외의 새 의존성은 추가하지 않는다.
+- PDF 생성 의존성은 OpenPDF와 임베드할 한글 폰트 WebJar로 한정한다.
 - 새 Kotlin·SQL 소스 파일은 첫 줄에 역할을 설명하는 한국어 주석을 둔다.
 - 무관한 기존 코드는 수정하지 않는다.
 
@@ -277,13 +277,14 @@ Expected: PDF 서비스와 경로가 없어 FAIL.
 
 - [ ] **Step 3: OpenPDF와 최소 문서 구현**
 
-`build.gradle.kts`에 다음 한 줄을 추가한다.
+`build.gradle.kts`에 PDF 생성 라이브러리와 실행 환경에 관계없이 임베드할 한글 폰트를 추가한다.
 
 ```kotlin
 implementation("com.github.librepdf:openpdf:3.0.5")
+implementation("org.webjars.npm:nanum-gothic-coding:4.0.0")
 ```
 
-PDF에는 제목, 분석 메타데이터, 요약, 발견 사항과 권고사항을 순서대로 추가한다. 한글 CID 폰트는 `HYGoThic-Medium`과 `UniKS-UCS2-H`를 사용하고 별도 템플릿 엔진은 만들지 않는다.
+PDF에는 제목, 분석 메타데이터, 요약, 발견 사항과 권고사항을 순서대로 추가한다. `NanumGothicCoding-Regular.ttf`를 PDF에 임베드하고 별도 템플릿 엔진은 만들지 않는다.
 
 - [ ] **Step 4: PDF 집중 테스트 통과 확인**
 
@@ -388,7 +389,7 @@ mockMvc.perform(
 
 - [ ] **Step 6: 사용자 컨트롤러와 오류 매핑 구현**
 
-요청은 nullable이 아닌 `Boolean` 필드로 선언하고 Bean Validation 대신 JSON 파싱과 생성자 필수값으로 누락을 거절한다. `UserNotFoundException`은 `404 USER_NOT_FOUND`로 변환한다.
+요청 필드는 nullable `Boolean?`과 `@NotNull`로 선언해 누락을 Bean Validation으로 거절하고, 잘못된 타입은 JSON 파싱 오류로 거절한다. `UserNotFoundException`은 `404 USER_NOT_FOUND`로 변환한다.
 
 - [ ] **Step 7: 사용자 집중 테스트 통과 확인**
 
