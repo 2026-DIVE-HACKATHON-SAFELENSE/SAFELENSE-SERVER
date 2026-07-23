@@ -9,24 +9,30 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.http.converter.ByteArrayHttpMessageConverter
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 class AnalysisResultControllerTests {
     private val service = mock(AnalysisResultService::class.java)
+    private val reportService = mock(AnalysisReportService::class.java)
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
         mockMvc = MockMvcBuilders
-            .standaloneSetup(AnalysisResultController(service))
+            .standaloneSetup(AnalysisResultController(service, reportService))
             .setControllerAdvice(ApiExceptionHandler())
-            .setMessageConverters(JacksonJsonHttpMessageConverter())
+            .setMessageConverters(JacksonJsonHttpMessageConverter(), ByteArrayHttpMessageConverter())
             .build()
     }
 
@@ -103,6 +109,23 @@ class AnalysisResultControllerTests {
         mockMvc.perform(get("/api/v1/analyses/31").principal(authentication()))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("ANALYSIS_NOT_FOUND"))
+    }
+
+    @Test
+    fun `downloads an owned analysis result as pdf`() {
+        val detail = detail()
+        val pdf = "%PDF-report".toByteArray()
+        `when`(service.get(7L, 31L)).thenReturn(detail)
+        `when`(reportService.create(detail)).thenReturn(pdf)
+
+        mockMvc.perform(get("/api/v1/analyses/31/report.pdf").principal(authentication()))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+            .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"safelense-analysis-31.pdf\""))
+            .andExpect(content().bytes(pdf))
+
+        verify(service).get(7L, 31L)
+        verify(reportService).create(detail)
     }
 
     private fun summary() =
