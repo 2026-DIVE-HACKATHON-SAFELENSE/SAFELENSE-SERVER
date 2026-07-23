@@ -1,8 +1,11 @@
 // 인증 요청의 검증 오류와 카카오 연동 오류를 HTTP 응답으로 변환하는 처리기
 package com.safelense.auth.presentation
 
-import com.safelense.analysis.InvalidAnalysisStageException
 import com.safelense.analysis.AnalysisCaseNotFoundException
+import com.safelense.analysis.AnalysisDocumentNotFoundException
+import com.safelense.analysis.AnalysisDocumentTooLargeException
+import com.safelense.analysis.InvalidAnalysisDocumentException
+import com.safelense.analysis.InvalidAnalysisStageException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
@@ -15,6 +18,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 data class ApiError(
     val code: String,
@@ -23,6 +27,18 @@ data class ApiError(
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+    @ExceptionHandler(InvalidAnalysisDocumentException::class)
+    fun handleInvalidAnalysisDocument(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_DOCUMENT", "Document is invalid.")
+
+    @ExceptionHandler(AnalysisDocumentTooLargeException::class, MaxUploadSizeExceededException::class)
+    fun handleAnalysisDocumentTooLarge(): ResponseEntity<ApiError> =
+        error(HttpStatus.PAYLOAD_TOO_LARGE, "DOCUMENT_TOO_LARGE", "Document is too large.")
+
+    @ExceptionHandler(AnalysisDocumentNotFoundException::class)
+    fun handleAnalysisDocumentNotFound(): ResponseEntity<ApiError> =
+        error(HttpStatus.NOT_FOUND, "ANALYSIS_DOCUMENT_NOT_FOUND", "Analysis document was not found.")
+
     @ExceptionHandler(AnalysisCaseNotFoundException::class)
     fun handleAnalysisCaseNotFound(): ResponseEntity<ApiError> =
         error(HttpStatus.NOT_FOUND, "ANALYSIS_CASE_NOT_FOUND", "Analysis case was not found.")
