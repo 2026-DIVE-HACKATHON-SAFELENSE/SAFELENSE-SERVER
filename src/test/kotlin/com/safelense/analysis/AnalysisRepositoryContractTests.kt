@@ -37,4 +37,20 @@ class AnalysisRepositoryContractTests {
             )
             .doesNotContain("document.content")
     }
+
+    @Test
+    fun `document deletion uses a scoped explicit bulk delete`() {
+        val method = AnalysisDocumentRepository::class.java.methods
+            .find { it.name == "deleteByIdAndCaseId" }
+
+        assertThat(method).isNotNull()
+        assertThat(method?.getAnnotation(Modifying::class.java)).isNotNull()
+        assertThat(method?.getAnnotation(Query::class.java)?.value)
+            .contains(
+                "delete from AnalysisDocument",
+                "document.id = :documentId",
+                "document.caseId = :caseId",
+            )
+        assertThat(method?.returnType).isEqualTo(Int::class.javaPrimitiveType)
+    }
 }

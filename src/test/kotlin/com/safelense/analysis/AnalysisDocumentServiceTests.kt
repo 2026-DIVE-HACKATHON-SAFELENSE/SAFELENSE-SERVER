@@ -5,11 +5,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
-import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 import org.springframework.mock.web.MockMultipartFile
 
@@ -170,15 +169,15 @@ class AnalysisDocumentServiceTests {
     }
 
     @Test
-    fun `deletes a document from an owned case`() {
-        val existing = document()
+    fun `deletes a document from an owned case without loading its content`() {
         `when`(caseRepository.findByIdAndUserIdForUpdate(11L, 7L)).thenReturn(analysisCase())
-        `when`(documentRepository.findByIdAndCaseId(21L, 11L)).thenReturn(existing)
+        `when`(documentRepository.deleteByIdAndCaseId(21L, 11L)).thenReturn(1)
 
         service.delete(7L, 11L, 21L)
 
         verify(caseRepository).findByIdAndUserIdForUpdate(11L, 7L)
-        verify(documentRepository).delete(existing)
+        verify(documentRepository).deleteByIdAndCaseId(21L, 11L)
+        verifyNoMoreInteractions(documentRepository)
     }
 
     @Test
@@ -188,19 +187,19 @@ class AnalysisDocumentServiceTests {
         assertThatThrownBy { service.delete(7L, 11L, 21L) }
             .isInstanceOf(AnalysisCaseNotFoundException::class.java)
 
-        verify(documentRepository, never()).findByIdAndCaseId(anyLong(), anyLong())
-        verify(documentRepository, never()).delete(any(AnalysisDocument::class.java))
+        verifyNoInteractions(documentRepository)
     }
 
     @Test
-    fun `rejects a document belonging to another case`() {
+    fun `rejects a missing document in an owned case from the scoped delete count`() {
         `when`(caseRepository.findByIdAndUserIdForUpdate(11L, 7L)).thenReturn(analysisCase())
-        `when`(documentRepository.findByIdAndCaseId(21L, 11L)).thenReturn(null)
+        `when`(documentRepository.deleteByIdAndCaseId(21L, 11L)).thenReturn(0)
 
         assertThatThrownBy { service.delete(7L, 11L, 21L) }
             .isInstanceOf(AnalysisDocumentNotFoundException::class.java)
 
-        verify(documentRepository, never()).delete(any(AnalysisDocument::class.java))
+        verify(documentRepository).deleteByIdAndCaseId(21L, 11L)
+        verifyNoMoreInteractions(documentRepository)
     }
 
     private fun assertInvalid(documentType: String, file: MockMultipartFile) {

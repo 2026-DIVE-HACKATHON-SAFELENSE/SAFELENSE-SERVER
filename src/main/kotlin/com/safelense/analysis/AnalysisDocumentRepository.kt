@@ -2,6 +2,7 @@
 package com.safelense.analysis
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
@@ -30,6 +31,18 @@ interface AnalysisDocumentRepository : JpaRepository<AnalysisDocument, Long> {
     fun findAllMetadataByCaseId(@Param("caseId") caseId: Long): List<AnalysisDocumentMetadata>
 
     fun findByCaseIdAndDocumentType(caseId: Long, documentType: String): AnalysisDocument?
-    fun findByIdAndCaseId(id: Long, caseId: Long): AnalysisDocument?
+
+    @Modifying
+    @Query(
+        """
+        delete from AnalysisDocument document
+        where document.id = :documentId and document.caseId = :caseId
+        """,
+    )
+    fun deleteByIdAndCaseId(
+        @Param("documentId") documentId: Long,
+        @Param("caseId") caseId: Long,
+    ): Int
+
     fun countByCaseId(caseId: Long): Long
 }

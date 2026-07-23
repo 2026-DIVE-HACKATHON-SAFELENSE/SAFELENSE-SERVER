@@ -71,7 +71,7 @@ MVP에서는 별도 파일 저장 인프라를 도입하지 않고 MySQL `MEDIUM
 
 ### 문서 삭제
 
-`DELETE /api/v1/analysis-cases/{caseId}/documents/{documentId}`는 본인 케이스와 해당 케이스 소속 문서를 함께 확인한다. 존재하지 않거나 소유자가 다르면 `404 ANALYSIS_DOCUMENT_NOT_FOUND`다. 성공 시 `204 No Content`를 반환한다.
+`DELETE /api/v1/analysis-cases/{caseId}/documents/{documentId}`는 먼저 본인 소유 케이스를 확인한다. 케이스가 없거나 다른 사용자 소유이면 `404 ANALYSIS_CASE_NOT_FOUND`, 본인 소유 케이스 안에서 문서가 없으면 `404 ANALYSIS_DOCUMENT_NOT_FOUND`다. 성공 시 `204 No Content`를 반환한다.
 
 ### 체크리스트 저장
 
@@ -97,7 +97,8 @@ MVP에서는 별도 파일 저장 인프라를 도입하지 않고 MySQL `MEDIUM
 - 잘못된 문서 종류·빈 파일·허용하지 않은 형식은 `400 INVALID_DOCUMENT`로 반환한다.
 - 파일 크기 초과는 `413 DOCUMENT_TOO_LARGE`로 반환한다.
 - 잘못되거나 중복된 체크리스트 문항은 `400 INVALID_CHECKLIST`로 반환한다.
-- 본인 소유가 아닌 주택·케이스·문서는 존재하지 않는 것과 같은 `404`로 반환한다.
+- 본인 소유가 아닌 주택·케이스는 존재하지 않는 것과 같은 주택·케이스별 `404`로 반환한다.
+- 문서 삭제에서 본인 소유 케이스 안에 문서가 없으면 `404 ANALYSIS_DOCUMENT_NOT_FOUND`로 반환한다.
 
 ## 테스트 전략
 

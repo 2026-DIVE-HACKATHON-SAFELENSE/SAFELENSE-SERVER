@@ -110,6 +110,19 @@ class AnalysisDocumentControllerTests {
             .andExpect(jsonPath("$.message").value("Analysis document was not found."))
     }
 
+    @Test
+    fun `returns case not found when deleting from a missing or non-owned case`() {
+        doThrow(AnalysisCaseNotFoundException()).`when`(service).delete(7L, 11L, 21L)
+
+        mockMvc.perform(
+            delete("/api/v1/analysis-cases/11/documents/21")
+                .principal(authentication()),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.code").value("ANALYSIS_CASE_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").value("Analysis case was not found."))
+    }
+
     private fun performUploadWithFailure(exception: RuntimeException): ResultActions {
         val file = pdfFile()
         doThrow(exception).`when`(service).upload(7L, 11L, "REGISTRY_CERTIFICATE", file)

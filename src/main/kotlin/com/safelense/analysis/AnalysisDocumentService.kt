@@ -74,9 +74,9 @@ class AnalysisDocumentService(
     fun delete(userId: Long, caseId: Long, documentId: Long) {
         caseRepository.findByIdAndUserIdForUpdate(caseId, userId)
             ?: throw AnalysisCaseNotFoundException()
-        val document = documentRepository.findByIdAndCaseId(documentId, caseId)
-            ?: throw AnalysisDocumentNotFoundException()
-        documentRepository.delete(document)
+        if (documentRepository.deleteByIdAndCaseId(documentId, caseId) == 0) {
+            throw AnalysisDocumentNotFoundException()
+        }
     }
 
     private fun AnalysisDocument.toView(): AnalysisDocumentView =
