@@ -10,4 +10,9 @@ class UserMigrationTests {
     fun `users migration exists`() {
         assertThat(ClassPathResource("db/migration/V1__create_users.sql").exists()).isTrue()
     }
+
+    @Test
+    fun `refresh token migration exists`() {
+        assertThat(ClassPathResource("db/migration/V2__create_refresh_tokens.sql").exists()).isTrue()
+    }
 }
