@@ -1,4 +1,4 @@
-// 카카오 로그인 경로만 익명 접근을 허용하는 API 보안 설정
+// 인증 발급 경로에 익명 접근을 허용하는 API 보안 설정
 package com.safelense.auth.config
 
 import org.springframework.context.annotation.Bean
@@ -19,7 +19,7 @@ class SecurityConfig {
         http.formLogin { it.disable() }
         http.httpBasic { it.disable() }
         http.authorizeHttpRequests {
-            it.requestMatchers(HttpMethod.POST, "/api/v1/auth/kakao").permitAll()
+            it.requestMatchers(HttpMethod.POST, "/api/v1/auth/kakao", "/api/v1/auth/refresh").permitAll()
             it.anyRequest().authenticated()
         }
         return http.build()

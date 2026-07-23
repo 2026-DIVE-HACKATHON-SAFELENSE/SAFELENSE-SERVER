@@ -3,6 +3,7 @@ package com.safelense.auth.presentation
 
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
+import com.safelense.auth.application.InvalidRefreshTokenException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -26,6 +27,10 @@ class ApiExceptionHandler {
     @ExceptionHandler(KakaoApiUnavailableException::class)
     fun handleKakaoApiUnavailable(): ResponseEntity<ApiError> =
         error(HttpStatus.BAD_GATEWAY, "KAKAO_API_UNAVAILABLE", "Kakao API is unavailable.")
+
+    @ExceptionHandler(InvalidRefreshTokenException::class)
+    fun handleInvalidRefreshToken(): ResponseEntity<ApiError> =
+        error(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN", "Refresh token is invalid.")
 
     private fun error(status: HttpStatus, code: String, message: String): ResponseEntity<ApiError> =
         ResponseEntity.status(status).body(ApiError(code, message))

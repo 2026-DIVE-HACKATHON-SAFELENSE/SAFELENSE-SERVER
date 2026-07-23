@@ -2,6 +2,7 @@
 package com.safelense.auth.presentation
 
 import com.safelense.auth.application.KakaoLoginService
+import com.safelense.auth.application.TokenRefreshService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
@@ -16,6 +17,10 @@ data class KakaoLoginRequest(
     @field:NotBlank val redirectUri: String,
 )
 
+data class TokenRefreshRequest(
+    @field:NotBlank val refreshToken: String,
+)
+
 class KakaoLoginResponse(
     val accessToken: String,
     val refreshToken: String,
@@ -26,10 +31,17 @@ class KakaoLoginResponse(
     fun getIsNewUser(): Boolean = newUser
 }
 
+data class TokenRefreshResponse(
+    val accessToken: String,
+    val tokenType: String = "Bearer",
+    val expiresIn: Long,
+)
+
 @RestController
 @RequestMapping("/api/v1/auth")
 class KakaoAuthController(
     private val kakaoLoginService: KakaoLoginService,
+    private val tokenRefreshService: TokenRefreshService,
 ) {
     @PostMapping("/kakao")
     @ResponseStatus(HttpStatus.OK)
@@ -41,5 +53,12 @@ class KakaoAuthController(
             expiresIn = result.expiresIn,
             newUser = result.isNewUser,
         )
+    }
+
+    @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.OK)
+    fun refresh(@Valid @RequestBody request: TokenRefreshRequest): TokenRefreshResponse {
+        val result = tokenRefreshService.refresh(request.refreshToken)
+        return TokenRefreshResponse(result.accessToken, expiresIn = result.expiresIn)
     }
 }

@@ -3,6 +3,9 @@ package com.safelense.auth.presentation
 
 import com.safelense.auth.application.KakaoLoginResult
 import com.safelense.auth.application.KakaoLoginService
+import com.safelense.auth.application.InvalidRefreshTokenException
+import com.safelense.auth.application.TokenRefreshResult
+import com.safelense.auth.application.TokenRefreshService
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import org.junit.jupiter.api.BeforeEach
@@ -20,11 +23,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 class KakaoAuthControllerTests {
     private val loginService = mock(KakaoLoginService::class.java)
+    private val tokenRefreshService = mock(TokenRefreshService::class.java)
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(KakaoAuthController(loginService))
+        mockMvc = MockMvcBuilders.standaloneSetup(KakaoAuthController(loginService, tokenRefreshService))
             .setControllerAdvice(ApiExceptionHandler())
             .setMessageConverters(JacksonJsonHttpMessageConverter())
             .build()
@@ -82,5 +86,44 @@ class KakaoAuthControllerTests {
         )
             .andExpect(status().isBadGateway)
             .andExpect(jsonPath("$.code").value("KAKAO_API_UNAVAILABLE"))
+    }
+
+    @Test
+    fun `returns a new access token for a valid refresh token`() {
+        `when`(tokenRefreshService.refresh("refresh-token"))
+            .thenReturn(TokenRefreshResult("new-access-token", 1800))
+
+        mockMvc.perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"refresh-token\"}"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.accessToken").value("new-access-token"))
+            .andExpect(jsonPath("$.tokenType").value("Bearer"))
+            .andExpect(jsonPath("$.expiresIn").value(1800))
+    }
+
+    @Test
+    fun `rejects an empty refresh token`() {
+        mockMvc.perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"\"}"),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `returns unauthorized for an invalid refresh token`() {
+        `when`(tokenRefreshService.refresh(anyString())).thenThrow(InvalidRefreshTokenException())
+
+        mockMvc.perform(
+            post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"expired-token\"}"),
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"))
     }
 }
