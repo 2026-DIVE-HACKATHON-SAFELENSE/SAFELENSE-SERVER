@@ -35,16 +35,28 @@ class JwtTokenIssuer(
     }
 
     fun validateRefreshToken(refreshToken: String): Long {
+        return validateToken(refreshToken, "refresh") { InvalidRefreshTokenException() }
+    }
+
+    fun validateAccessToken(accessToken: String): Long {
+        return validateToken(accessToken, "access") { InvalidAccessTokenException() }
+    }
+
+    private fun validateToken(
+        token: String,
+        tokenType: String,
+        invalidTokenException: () -> RuntimeException,
+    ): Long {
         val claims = try {
-            Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(refreshToken).payload
+            Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).payload
         } catch (_: JwtException) {
-            throw InvalidRefreshTokenException()
+            throw invalidTokenException()
         }
-        if (claims["tokenType"] != "refresh") {
-            throw InvalidRefreshTokenException()
+        if (claims["tokenType"] != tokenType) {
+            throw invalidTokenException()
         }
 
-        return claims.subject.toLongOrNull() ?: throw InvalidRefreshTokenException()
+        return claims.subject.toLongOrNull() ?: throw invalidTokenException()
     }
 
     private fun createToken(

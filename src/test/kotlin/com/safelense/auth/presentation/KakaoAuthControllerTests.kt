@@ -4,6 +4,7 @@ package com.safelense.auth.presentation
 import com.safelense.auth.application.KakaoLoginResult
 import com.safelense.auth.application.KakaoLoginService
 import com.safelense.auth.application.InvalidRefreshTokenException
+import com.safelense.auth.application.LogoutService
 import com.safelense.auth.application.TokenRefreshResult
 import com.safelense.auth.application.TokenRefreshService
 import com.safelense.auth.kakao.KakaoAuthenticationException
@@ -14,6 +15,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.http.MediaType
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -24,11 +26,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 class KakaoAuthControllerTests {
     private val loginService = mock(KakaoLoginService::class.java)
     private val tokenRefreshService = mock(TokenRefreshService::class.java)
+    private val logoutService = mock(LogoutService::class.java)
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(KakaoAuthController(loginService, tokenRefreshService))
+        mockMvc = MockMvcBuilders.standaloneSetup(KakaoAuthController(loginService, tokenRefreshService, logoutService))
             .setControllerAdvice(ApiExceptionHandler())
             .setMessageConverters(JacksonJsonHttpMessageConverter())
             .build()
@@ -126,5 +129,16 @@ class KakaoAuthControllerTests {
         )
             .andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"))
+    }
+
+    @Test
+    fun `deletes the authenticated users refresh token on logout`() {
+        mockMvc.perform(
+            post("/api/v1/auth/logout")
+                .principal(UsernamePasswordAuthenticationToken(7L, null)),
+        )
+            .andExpect(status().isNoContent)
+
+        org.mockito.Mockito.verify(logoutService).logout(7L)
     }
 }

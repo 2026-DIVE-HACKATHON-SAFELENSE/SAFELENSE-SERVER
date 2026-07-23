@@ -2,10 +2,13 @@
 package com.safelense.auth.presentation
 
 import com.safelense.auth.application.KakaoLoginService
+import com.safelense.auth.application.LogoutService
 import com.safelense.auth.application.TokenRefreshService
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -43,6 +46,7 @@ data class TokenRefreshResponse(
 class KakaoAuthController(
     private val kakaoLoginService: KakaoLoginService,
     private val tokenRefreshService: TokenRefreshService,
+    private val logoutService: LogoutService,
 ) {
     @PostMapping("/kakao")
     @ResponseStatus(HttpStatus.OK)
@@ -61,5 +65,11 @@ class KakaoAuthController(
     fun refresh(@Valid @RequestBody request: TokenRefreshRequest): TokenRefreshResponse {
         val result = tokenRefreshService.refresh(request.refreshToken)
         return TokenRefreshResponse(result.accessToken, result.refreshToken, expiresIn = result.expiresIn)
+    }
+
+    @PostMapping("/logout")
+    fun logout(authentication: Authentication): ResponseEntity<Void> {
+        logoutService.logout(authentication.principal as Long)
+        return ResponseEntity.noContent().build()
     }
 }

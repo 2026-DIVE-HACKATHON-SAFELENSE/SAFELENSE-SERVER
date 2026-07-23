@@ -50,4 +50,13 @@ class JwtTokenIssuerTests {
         assertThatThrownBy { issuer.validateRefreshToken("not-a-jwt") }
             .isInstanceOf(InvalidRefreshTokenException::class.java)
     }
+
+    @Test
+    fun `returns the user ID from a valid access token and rejects a refresh token`() {
+        val tokens = issuer.issue(42L)
+
+        assertThat(issuer.validateAccessToken(tokens.accessToken)).isEqualTo(42L)
+        assertThatThrownBy { issuer.validateAccessToken(tokens.refreshToken) }
+            .isInstanceOf(InvalidAccessTokenException::class.java)
+    }
 }
