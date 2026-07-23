@@ -46,3 +46,6 @@
 - 2026-07-24. 목록은 알림 ID 내림차순 커서를 사용하고 기본 20개, 최대 100개를 반환한다. `unreadCount`는 필터와 페이지에 관계없는 사용자 전체 미읽음 개수다.
 - 2026-07-24. 읽음 처리는 `read_at IS NULL` 조건부 업데이트로 최초 읽음 시각을 보존하고 모든 조회·변경을 인증 사용자 ID로 격리한다.
 - 2026-07-24. 외부 생성 API, 푸시, SSE·WebSocket과 분석·뉴스 기능의 실제 연동은 이번 범위에서 제외한다.
+- 2026-07-24. `./gradlew test --tests 'com.safelense.notification.*'`, `./gradlew test`, 권한 확장 환경에서 재실행한 `./gradlew bootJar`가 모두 `BUILD SUCCESSFUL`로 통과했다. 최초 `bootJar`는 Gradle wrapper 캐시 잠금 파일 접근이 샌드박스에서 거부되어 재실행했다.
+- 2026-07-24. `git diff --check`와 `6b0d8d59370a42c8854f7a6204a6f27f2af7a906..HEAD` 전체 diff를 읽기 전용으로 검토했다. 공백 오류, 범위 이탈, 명백한 오류는 발견하지 못했다.
+- 2026-07-24. 실제 MySQL에서 Flyway V5 적용, 알림 읽음 조건부 bulk update와 모두 읽음 bulk update를 검증하는 통합 테스트는 DB 환경이 제공되지 않아 실행하지 못했다.
