@@ -15,3 +15,6 @@
 - 2026-07-24. 최초 등록은 POST, 이후 수정은 `application/merge-patch+json` PATCH로 분리한다. PATCH에서 생략은 유지, 선택 필드의 명시적 null은 삭제로 해석한다.
 - 2026-07-24. 내 집 저장 필드는 주소, 만원 단위 보증금, 건물 유형, 선택 임대인명과 계약 예정일이다. 월세, 상세 주소와 변경 이력은 제외한다.
 - 2026-07-24. 미등록 조회는 정상 초기 상태로 보고 `200 {"property": null}`을 반환한다. 중복 생성은 409, 미등록 수정은 404로 처리한다.
+- 2026-07-24. Spring Boot 4의 HTTP 메시지 변환기와 맞추기 위해 Merge Patch 본문은 Jackson 3의 `tools.jackson.databind.JsonNode`로 파싱한다.
+- 2026-07-24. 동시 최초 등록은 DB 유니크 제약을 최종 기준으로 삼고, `saveAndFlush`에서 발생한 제약 위반을 `PROPERTY_ALREADY_EXISTS`로 변환한다.
+- 2026-07-24. `./gradlew test --tests 'com.safelense.property.*'`, `./gradlew test`, `./gradlew bootJar`가 모두 통과했다.

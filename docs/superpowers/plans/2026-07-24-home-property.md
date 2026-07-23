@@ -30,10 +30,10 @@
 **Interfaces:**
 - Produces: 사용자당 한 행을 보장하는 `home_properties` 스키마.
 
-- [ ] V3 마이그레이션의 존재와 핵심 제약을 확인하는 실패 테스트를 작성한다.
-- [ ] `./gradlew test --tests 'com.safelense.property.HomePropertyMigrationTests'`가 마이그레이션 부재로 실패하는지 확인한다.
-- [ ] V3 마이그레이션을 최소 구현한다.
-- [ ] 같은 테스트가 통과하는지 확인한다.
+- [x] V3 마이그레이션의 존재와 핵심 제약을 확인하는 실패 테스트를 작성한다.
+- [x] `./gradlew test --tests 'com.safelense.property.HomePropertyMigrationTests'`가 마이그레이션 부재로 실패하는지 확인한다.
+- [x] V3 마이그레이션을 최소 구현한다.
+- [x] 같은 테스트가 통과하는지 확인한다.
 
 ### Task 2: 주택 도메인과 서비스
 
@@ -46,10 +46,10 @@
 **Interfaces:**
 - Produces: `get(userId)`, `create(userId, command)`, `patch(userId, command)` 서비스 계약.
 
-- [ ] 조회·생성·중복·부분 수정·선택 정보 삭제·미등록 수정의 실패 테스트를 작성한다.
-- [ ] 관련 테스트가 타입 부재로 실패하는지 확인한다.
-- [ ] 엔티티, 저장소, 서비스와 도메인 예외를 최소 구현한다.
-- [ ] 서비스 테스트가 통과하는지 확인한다.
+- [x] 조회·생성·중복·부분 수정·선택 정보 삭제·미등록 수정의 실패 테스트를 작성한다.
+- [x] 관련 테스트가 타입 부재로 실패하는지 확인한다.
+- [x] 엔티티, 저장소, 서비스와 도메인 예외를 최소 구현한다.
+- [x] 서비스 테스트가 통과하는지 확인한다.
 
 ### Task 3: HTTP API와 오류 처리
 
@@ -61,15 +61,15 @@
 **Interfaces:**
 - Produces: `GET`, `POST`, `PATCH /api/v1/me/property`와 공통 `ApiError` 응답.
 
-- [ ] 성공 응답, principal 전달, POST 검증, Merge Patch 규칙과 오류 상태의 실패 테스트를 작성한다.
-- [ ] 관련 테스트가 컨트롤러 부재로 실패하는지 확인한다.
-- [ ] 컨트롤러, PATCH 파서와 예외 매핑을 최소 구현한다.
-- [ ] 관련 테스트가 통과하는지 확인한다.
+- [x] 성공 응답, principal 전달, POST 검증, Merge Patch 규칙과 오류 상태의 실패 테스트를 작성한다.
+- [x] 관련 테스트가 컨트롤러 부재로 실패하는지 확인한다.
+- [x] 컨트롤러, PATCH 파서와 예외 매핑을 최소 구현한다.
+- [x] 관련 테스트가 통과하는지 확인한다.
 
 ### Task 4: 전체 검증과 커밋
 
-- [ ] `./gradlew test --tests 'com.safelense.property.*'`를 실행한다.
-- [ ] `./gradlew test`를 실행한다.
-- [ ] `./gradlew bootJar`를 실행한다.
-- [ ] `git diff --check`와 변경 파일 검토를 수행한다.
-- [ ] 문서, 도메인·마이그레이션, HTTP API를 의미 단위로 커밋한다.
+- [x] `./gradlew test --tests 'com.safelense.property.*'`를 실행한다.
+- [x] `./gradlew test`를 실행한다.
+- [x] `./gradlew bootJar`를 실행한다.
+- [x] `git diff --check`와 변경 파일 검토를 수행한다.
+- [x] 문서, 도메인·마이그레이션, HTTP API를 의미 단위로 커밋한다.
