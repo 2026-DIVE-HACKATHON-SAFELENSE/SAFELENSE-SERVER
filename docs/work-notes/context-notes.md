@@ -28,3 +28,7 @@
 - 2026-07-24. `POST /api/v1/analysis-cases/{caseId}/analyze`, 분석 결과, 규칙 엔진과 멱등성은 연습 데이터 확보 후 별도 작업으로 진행한다.
 - 2026-07-24. 상세 구현은 템플릿, V4 입력 영속 모델, 케이스 생성·조회, 문서 업로드·삭제, 체크리스트 전체 교체 순서로 TDD와 의미 단위 커밋을 적용한다.
 - 2026-07-24. 같은 케이스의 문서 변경은 케이스 행 비관적 쓰기 잠금으로 직렬화하고 문서 슬롯 유일 제약을 최종 기준으로 유지한다.
+- 2026-07-24. 구현된 분석 템플릿 버전은 `2026-07-24-v1`이며 계약 전·중·후 모든 단계에 공통 서류 슬롯 6개를 제공한다.
+- 2026-07-24. V4 마이그레이션은 `analysis_cases`, `analysis_documents`, `analysis_checklist_answers` 테이블을 만들고, 문서 슬롯과 체크리스트 문항별 유일 제약을 둔다.
+- 2026-07-24. 업로드 파일은 PDF, JPEG, PNG만 허용하고 파일당 최대 10MiB이며 MySQL `MEDIUMBLOB`에 저장한다.
+- 2026-07-24. `./gradlew test --tests 'com.safelense.analysis.*'`, `./gradlew test`, `./gradlew bootJar`를 실행해 모두 `BUILD SUCCESSFUL`을 확인했다. `bootJar`는 Gradle 사용자 캐시 잠금 파일이 샌드박스에서 차단되어 권한 확장 환경에서 재실행했다.
