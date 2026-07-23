@@ -30,7 +30,7 @@
 
 **Interfaces:** `RefreshTokenStore.save(userId: Long, refreshToken: String, expiresAt: Instant)`, `matches(userId: Long, refreshToken: String): Boolean`, `deleteByUserId(userId: Long)`을 제공한다.
 
-- [ ] **Step 1: 저장·일치·삭제의 실패 테스트를 작성한다.**
+- [x] **Step 1: 저장·일치·삭제의 실패 테스트를 작성한다.**
 
 ```kotlin
 @Test
@@ -49,13 +49,13 @@ fun `matches only the stored refresh token`() {
 }
 ```
 
-- [ ] **Step 2: 실패를 확인한다.**
+- [x] **Step 2: 실패를 확인한다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test --tests com.safelense.auth.token.RefreshTokenStoreTests`.
 
 Expected: `RefreshTokenStore`와 `RefreshToken`을 찾을 수 없어 컴파일 실패.
 
-- [ ] **Step 3: 마이그레이션과 최소 저장소를 구현한다.**
+- [x] **Step 3: 마이그레이션과 최소 저장소를 구현한다.**
 
 ```sql
 -- 사용자별 활성 리프레시 토큰 해시를 저장하는 MySQL 테이블
@@ -87,13 +87,13 @@ class RefreshTokenStore(private val repository: RefreshTokenRepository) {
 }
 ```
 
-- [ ] **Step 4: 저장소와 마이그레이션 테스트를 통과시킨다.**
+- [x] **Step 4: 저장소와 마이그레이션 테스트를 통과시킨다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test --tests com.safelense.auth.token.RefreshTokenStoreTests --tests com.safelense.user.UserMigrationTests`.
 
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 5: 영속성 변경을 커밋한다.**
+- [x] **Step 5: 영속성 변경을 커밋한다.**
 
 ```bash
 git add src/main/resources/db/migration/V2__create_refresh_tokens.sql src/main/kotlin/com/safelense/auth/token src/test/kotlin/com/safelense/auth/token src/test/kotlin/com/safelense/user/UserMigrationTests.kt
@@ -114,7 +114,7 @@ git commit -m "feat: 리프레시 토큰 저장소 추가"
 
 **Interfaces:** `JwtTokenIssuer.validateRefreshToken(refreshToken: String): Long`과 `IssuedTokens.refreshTokenExpiresAt: Instant`를 추가한다. `TokenRefreshResult`는 `accessToken`, `refreshToken`, `expiresIn`을 반환한다.
 
-- [ ] **Step 1: 로그인 저장과 갱신 교체의 실패 테스트를 작성한다.**
+- [x] **Step 1: 로그인 저장과 갱신 교체의 실패 테스트를 작성한다.**
 
 ```kotlin
 @Test
@@ -132,13 +132,13 @@ fun `rotates tokens only when the stored token matches`() {
 }
 ```
 
-- [ ] **Step 2: 실패를 확인한다.**
+- [x] **Step 2: 실패를 확인한다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test --tests com.safelense.auth.application.KakaoLoginServiceTests --tests com.safelense.auth.application.TokenRefreshServiceTests`.
 
 Expected: 새 생성자 인자, `validateRefreshToken`, 새 응답 필드가 없어 컴파일 실패.
 
-- [ ] **Step 3: 최소 토큰 교체 로직을 구현한다.**
+- [x] **Step 3: 최소 토큰 교체 로직을 구현한다.**
 
 ```kotlin
 fun refresh(refreshToken: String): TokenRefreshResult {
@@ -152,13 +152,13 @@ fun refresh(refreshToken: String): TokenRefreshResult {
 
 `KakaoLoginService.login`은 `tokenIssuer.issue` 직후 `refreshTokenStore.save`를 호출한다. 재발급 응답은 `refreshToken`을 포함한다.
 
-- [ ] **Step 4: 단위·MVC 테스트를 통과시킨다.**
+- [x] **Step 4: 단위·MVC 테스트를 통과시킨다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test --tests com.safelense.auth.application.JwtTokenIssuerTests --tests com.safelense.auth.application.KakaoLoginServiceTests --tests com.safelense.auth.application.TokenRefreshServiceTests --tests com.safelense.auth.presentation.KakaoAuthControllerTests`.
 
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 5: 토큰 교체 변경을 커밋한다.**
+- [x] **Step 5: 토큰 교체 변경을 커밋한다.**
 
 ```bash
 git add src/main/kotlin/com/safelense/auth/application src/main/kotlin/com/safelense/auth/presentation/KakaoAuthController.kt src/test/kotlin/com/safelense/auth/application src/test/kotlin/com/safelense/auth/presentation/KakaoAuthControllerTests.kt
@@ -179,7 +179,7 @@ git commit -m "feat: 리프레시 토큰 교체 발급 추가"
 
 **Interfaces:** `JwtTokenIssuer.validateAccessToken(accessToken: String): Long`과 `LogoutService.logout(userId: Long)`을 추가한다. 필터는 `Authentication.principal`에 `Long` 사용자 ID를 저장한다.
 
-- [ ] **Step 1: 로그아웃 삭제와 액세스 토큰 검증의 실패 테스트를 작성한다.**
+- [x] **Step 1: 로그아웃 삭제와 액세스 토큰 검증의 실패 테스트를 작성한다.**
 
 ```kotlin
 @Test
@@ -195,13 +195,13 @@ fun `rejects a refresh token as access authentication`() {
 }
 ```
 
-- [ ] **Step 2: 실패를 확인한다.**
+- [x] **Step 2: 실패를 확인한다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test --tests com.safelense.auth.application.LogoutServiceTests --tests com.safelense.auth.application.JwtTokenIssuerTests`.
 
 Expected: `LogoutService`와 `validateAccessToken`이 없어 컴파일 실패.
 
-- [ ] **Step 3: 인증 필터와 로그아웃 엔드포인트를 최소 구현한다.**
+- [x] **Step 3: 인증 필터와 로그아웃 엔드포인트를 최소 구현한다.**
 
 ```kotlin
 // Bearer 액세스 JWT에서 사용자 인증 정보를 만드는 보안 필터
@@ -219,13 +219,13 @@ class JwtAuthenticationFilter(private val issuer: JwtTokenIssuer) : OncePerReque
 
 `SecurityConfig`은 필터를 `UsernamePasswordAuthenticationFilter` 앞에 추가하고 인증 실패를 `401`로 변환한다. 컨트롤러는 `@PostMapping("/logout")`에서 `Authentication.principal as Long`을 받아 `logoutService.logout`을 호출한 뒤 `204`를 반환한다.
 
-- [ ] **Step 4: 서비스·JWT·MVC 테스트를 통과시킨다.**
+- [x] **Step 4: 서비스·JWT·MVC 테스트를 통과시킨다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test --tests com.safelense.auth.application.LogoutServiceTests --tests com.safelense.auth.application.JwtTokenIssuerTests --tests com.safelense.auth.presentation.KakaoAuthControllerTests`.
 
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 5: 로그아웃 API 변경을 커밋한다.**
+- [x] **Step 5: 로그아웃 API 변경을 커밋한다.**
 
 ```bash
 git add src/main/kotlin/com/safelense/auth/application/LogoutService.kt src/main/kotlin/com/safelense/auth/config src/main/kotlin/com/safelense/auth/presentation/KakaoAuthController.kt src/main/kotlin/com/safelense/auth/application/JwtTokenIssuer.kt src/test/kotlin/com/safelense/auth/application src/test/kotlin/com/safelense/auth/presentation/KakaoAuthControllerTests.kt
@@ -239,17 +239,17 @@ git commit -m "feat: JWT 로그아웃 API 추가"
 - Modify: `docs/work-notes/context-notes.md`
 - Modify: `docs/superpowers/specs/2026-07-23-kakao-social-login-design.md`
 
-- [ ] **Step 1: 전체 테스트와 실행 JAR을 검증한다.**
+- [x] **Step 1: 전체 테스트와 실행 JAR을 검증한다.**
 
 Run: `./gradlew --no-daemon -Dkotlin.compiler.execution.strategy=in-process -Dkotlin.incremental=false test bootJar`.
 
 Expected: `BUILD SUCCESSFUL`.
 
-- [ ] **Step 2: 작업 노트와 인증 설계를 갱신한다.**
+- [x] **Step 2: 작업 노트와 인증 설계를 갱신한다.**
 
 체크리스트의 리프레시 토큰 저장과 로그아웃 항목을 완료 처리하고, 인증 설계 문서에 DB 해시 저장, 토큰 교체, 로그아웃 정책을 반영한다.
 
-- [ ] **Step 3: 문서를 커밋한다.**
+- [x] **Step 3: 문서를 커밋한다.**
 
 ```bash
 git add docs
