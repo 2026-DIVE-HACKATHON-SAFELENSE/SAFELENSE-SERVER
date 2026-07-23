@@ -17,6 +17,7 @@ import com.safelense.notification.NotificationNotFoundException
 import com.safelense.property.HomePropertyAlreadyExistsException
 import com.safelense.property.HomePropertyNotFoundException
 import com.safelense.property.InvalidHomePropertyRequestException
+import com.safelense.user.UserNotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -32,6 +33,10 @@ data class ApiError(
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+    @ExceptionHandler(UserNotFoundException::class)
+    fun handleUserNotFound(): ResponseEntity<ApiError> =
+        error(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "User was not found.")
+
     @ExceptionHandler(InvalidAnalysisResultRequestException::class)
     fun handleInvalidAnalysisResultRequest(): ResponseEntity<ApiError> =
         error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Request is invalid.")
