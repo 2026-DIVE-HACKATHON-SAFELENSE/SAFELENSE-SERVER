@@ -40,3 +40,9 @@
 - 2026-07-24. 실제 MySQL Flyway·비관적 잠금·IDENTITY flush 순서 통합 테스트는 제공된 DB와 추가 테스트 인프라가 없어 보류한다. 실제 multipart resolver의 요청 크기 거절도 standalone MockMvc가 resolver를 구동하지 않아 기존 예외 매핑 단위 테스트까지만 유지한다.
 - 2026-07-24. 최종 코드 변경 뒤 `./gradlew test --tests 'com.safelense.analysis.*'`, `./gradlew test`, `./gradlew bootJar`가 `BUILD SUCCESSFUL`로 통과했다. 최종 문서 커밋 뒤 동일 전체 검증과 `git diff --check`를 다시 실행한다.
 - 2026-07-24. `c74c312..160c973` 전체 수정 범위의 읽기 전용 리뷰에서 Critical, Important, Minor 발견 사항이 없고 병합 준비 가능 판정을 받았다.
+- 2026-07-24. 알림 기능은 노션의 목록·한 건 읽음에 사진의 모두 읽음과 전체 미읽음 개수를 추가해 구현한다.
+- 2026-07-24. 알림은 단일 MySQL 테이블을 기준 데이터로 사용하고 `ANALYSIS`, `NEWS`, `SYSTEM` 유형을 저장한다.
+- 2026-07-24. 알림 이동 대상은 선택적인 `ANALYSIS_RESULT` 또는 `NEWS_ARTICLE`과 문자열 ID로 저장하며 두 필드는 함께 존재하거나 함께 비어야 한다.
+- 2026-07-24. 목록은 알림 ID 내림차순 커서를 사용하고 기본 20개, 최대 100개를 반환한다. `unreadCount`는 필터와 페이지에 관계없는 사용자 전체 미읽음 개수다.
+- 2026-07-24. 읽음 처리는 `read_at IS NULL` 조건부 업데이트로 최초 읽음 시각을 보존하고 모든 조회·변경을 인증 사용자 ID로 격리한다.
+- 2026-07-24. 외부 생성 API, 푸시, SSE·WebSocket과 분석·뉴스 기능의 실제 연동은 이번 범위에서 제외한다.
