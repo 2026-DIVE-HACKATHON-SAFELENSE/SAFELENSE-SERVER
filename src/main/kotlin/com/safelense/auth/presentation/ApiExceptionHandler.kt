@@ -2,6 +2,7 @@
 package com.safelense.auth.presentation
 
 import com.safelense.analysis.InvalidAnalysisStageException
+import com.safelense.analysis.AnalysisCaseNotFoundException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
@@ -22,6 +23,10 @@ data class ApiError(
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+    @ExceptionHandler(AnalysisCaseNotFoundException::class)
+    fun handleAnalysisCaseNotFound(): ResponseEntity<ApiError> =
+        error(HttpStatus.NOT_FOUND, "ANALYSIS_CASE_NOT_FOUND", "Analysis case was not found.")
+
     @ExceptionHandler(InvalidAnalysisStageException::class)
     fun handleInvalidAnalysisStage(): ResponseEntity<ApiError> =
         error(HttpStatus.BAD_REQUEST, "INVALID_STAGE", "Analysis stage is invalid.")
