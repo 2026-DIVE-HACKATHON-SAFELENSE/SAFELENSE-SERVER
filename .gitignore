@@ -1,4 +1,7 @@
 .idea/
 .worktrees/
+.gradle/
+build/
+.superpowers/sdd/
 /application.yml
 .env
