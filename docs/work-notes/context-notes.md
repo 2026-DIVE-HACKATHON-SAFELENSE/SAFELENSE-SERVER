@@ -32,3 +32,11 @@
 - 2026-07-24. V4 마이그레이션은 `analysis_cases`, `analysis_documents`, `analysis_checklist_answers` 테이블을 만들고, 문서 슬롯과 체크리스트 문항별 유일 제약을 둔다.
 - 2026-07-24. 업로드 파일은 PDF, JPEG, PNG만 허용하고 파일당 최대 10MiB이며 MySQL `MEDIUMBLOB`에 저장한다.
 - 2026-07-24. `./gradlew test --tests 'com.safelense.analysis.*'`, `./gradlew test`, `./gradlew bootJar`를 실행해 모두 `BUILD SUCCESSFUL`을 확인했다. `bootJar`는 Gradle 사용자 캐시 잠금 파일이 샌드박스에서 차단되어 권한 확장 환경에서 재실행했다.
+- 2026-07-24. 최종 리뷰 수정은 체크리스트 삭제 SQL 순서, 문서 메타데이터 조회와 문서 삭제의 BLOB 비로딩, 문서 삭제 오류 계약 일치로 한정한다.
+- 2026-07-24. 문서 삭제는 케이스가 없거나 인증 사용자 소유가 아니면 `ANALYSIS_CASE_NOT_FOUND`, 소유 케이스 안에 대상 문서가 없으면 `ANALYSIS_DOCUMENT_NOT_FOUND`를 반환하는 사용자 결정을 유지한다.
+- 2026-07-24. 체크리스트의 파생 `deleteAllByCaseId`는 Spring Data JPA 4.1.0에서 엔티티를 조회해 `EntityManager.remove`만 예약한다. IDENTITY 신규 삽입이 실제 삭제 SQL보다 먼저 실행될 수 있다는 가설을 라이브러리 바이트코드와 저장소 계약으로 확인하고, 즉시 실행되는 `@Modifying` JPQL bulk DELETE로 교체했다.
+- 2026-07-24. 케이스 상세 조회는 `content`를 포함한 `AnalysisDocument` 엔티티 전체를 반환하는 저장소 메서드를 사용했다. ID, 종류, 파일명, MIME 타입, 크기만 선택하는 생성자 projection으로 바꿨다.
+- 2026-07-24. 문서 삭제도 `findByIdAndCaseId`로 BLOB 엔티티를 읽은 뒤 삭제했다. 케이스 소유권을 먼저 확인하고 `(documentId, caseId)` 조건 bulk DELETE의 영향 행 수가 0인지 검사하도록 바꿨다.
+- 2026-07-24. 실제 MySQL Flyway·비관적 잠금·IDENTITY flush 순서 통합 테스트는 제공된 DB와 추가 테스트 인프라가 없어 보류한다. 실제 multipart resolver의 요청 크기 거절도 standalone MockMvc가 resolver를 구동하지 않아 기존 예외 매핑 단위 테스트까지만 유지한다.
+- 2026-07-24. 최종 코드 변경 뒤 `./gradlew test --tests 'com.safelense.analysis.*'`, `./gradlew test`, `./gradlew bootJar`가 `BUILD SUCCESSFUL`로 통과했다. 최종 문서 커밋 뒤 동일 전체 검증과 `git diff --check`를 다시 실행한다.
+- 2026-07-24. `c74c312..160c973` 전체 수정 범위의 읽기 전용 리뷰에서 Critical, Important, Minor 발견 사항이 없고 병합 준비 가능 판정을 받았다.
