@@ -2,6 +2,7 @@
 package com.safelense.property
 
 import java.time.LocalDate
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -48,16 +49,19 @@ class HomePropertyService(
             throw HomePropertyAlreadyExistsException()
         }
 
-        return homePropertyRepository.save(
-            HomeProperty(
-                userId = userId,
-                address = command.address.trim(),
-                depositAmount = command.depositAmount,
-                buildingType = command.buildingType,
-                landlordName = command.landlordName.normalizeOptionalText(),
-                plannedContractDate = command.plannedContractDate,
-            ),
+        val property = HomeProperty(
+            userId = userId,
+            address = command.address.trim(),
+            depositAmount = command.depositAmount,
+            buildingType = command.buildingType,
+            landlordName = command.landlordName.normalizeOptionalText(),
+            plannedContractDate = command.plannedContractDate,
         )
+        return try {
+            homePropertyRepository.saveAndFlush(property)
+        } catch (_: DataIntegrityViolationException) {
+            throw HomePropertyAlreadyExistsException()
+        }
     }
 
     @Transactional
