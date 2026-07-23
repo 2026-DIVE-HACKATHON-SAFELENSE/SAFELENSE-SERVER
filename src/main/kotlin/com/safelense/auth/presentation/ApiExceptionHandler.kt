@@ -4,6 +4,7 @@ package com.safelense.auth.presentation
 import com.safelense.analysis.AnalysisCaseNotFoundException
 import com.safelense.analysis.AnalysisDocumentNotFoundException
 import com.safelense.analysis.AnalysisDocumentTooLargeException
+import com.safelense.analysis.InvalidAnalysisChecklistException
 import com.safelense.analysis.InvalidAnalysisDocumentException
 import com.safelense.analysis.InvalidAnalysisStageException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
@@ -27,6 +28,10 @@ data class ApiError(
 
 @RestControllerAdvice
 class ApiExceptionHandler {
+    @ExceptionHandler(InvalidAnalysisChecklistException::class)
+    fun handleInvalidAnalysisChecklist(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_CHECKLIST", "Checklist is invalid.")
+
     @ExceptionHandler(InvalidAnalysisDocumentException::class)
     fun handleInvalidAnalysisDocument(): ResponseEntity<ApiError> =
         error(HttpStatus.BAD_REQUEST, "INVALID_DOCUMENT", "Document is invalid.")
