@@ -9,8 +9,12 @@ import java.time.LocalDate
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 class AnalysisCaseServiceTests {
@@ -40,6 +44,13 @@ class AnalysisCaseServiceTests {
 
         assertThat(result.id).isEqualTo(11L)
         assertThat(result.templateVersion).isEqualTo(ANALYSIS_TEMPLATE_VERSION)
+
+        val captor = ArgumentCaptor.forClass(AnalysisCase::class.java)
+        verify(caseRepository).save(captor.capture())
+        assertThat(captor.value.userId).isEqualTo(7L)
+        assertThat(captor.value.propertyId).isEqualTo(3L)
+        assertThat(captor.value.stage).isEqualTo(AnalysisStage.BEFORE_CONTRACT)
+        assertThat(captor.value.templateVersion).isEqualTo(ANALYSIS_TEMPLATE_VERSION)
     }
 
     @Test
@@ -64,6 +75,61 @@ class AnalysisCaseServiceTests {
         assertThat(result.answers).isEmpty()
     }
 
+    @Test
+    fun `merges partial inputs in catalog order and preserves unchecked answers`() {
+        `when`(caseRepository.findByIdAndUserId(11L, 7L)).thenReturn(analysisCase())
+        `when`(documentRepository.findAllByCaseId(11L)).thenReturn(
+            listOf(
+                document("MANAGEMENT_FEE_STATEMENT", "관리비.pdf"),
+                document("REGISTRY_CERTIFICATE", "등기부.pdf"),
+            ),
+        )
+        `when`(answerRepository.findAllByCaseId(11L)).thenReturn(
+            listOf(
+                answer("CONFIRMED_OWNER", false),
+                answer("VISITED_PROPERTY", true),
+            ),
+        )
+
+        val result = service.get(7L, 11L)
+
+        assertThat(result.documents.map { it.documentType }).containsExactly(
+            "REGISTRY_CERTIFICATE",
+            "BUILDING_LEDGER",
+            "LAND_REGISTER",
+            "BROKER_LICENSE",
+            "LANDLORD_TAX_CERTIFICATE",
+            "MANAGEMENT_FEE_STATEMENT",
+        )
+        val uploadedSlot = result.documents[0]
+        assertThat(uploadedSlot.documentId).isEqualTo(101L)
+        assertThat(uploadedSlot.originalFileName).isEqualTo("등기부.pdf")
+        assertThat(uploadedSlot.mimeType).isEqualTo("application/pdf")
+        assertThat(uploadedSlot.fileSize).isEqualTo(1024L)
+        val emptySlot = result.documents[1]
+        assertThat(emptySlot.documentId).isNull()
+        assertThat(emptySlot.originalFileName).isNull()
+        assertThat(emptySlot.mimeType).isNull()
+        assertThat(emptySlot.fileSize).isNull()
+        assertThat(result.uploadedCount).isEqualTo(2)
+        assertThat(result.answers).containsExactly(
+            AnalysisChecklistAnswerView("VISITED_PROPERTY", true),
+            AnalysisChecklistAnswerView("CONFIRMED_OWNER", false),
+        )
+    }
+
+    @Test
+    fun `hides a case not owned by the user before reading its inputs`() {
+        `when`(caseRepository.findByIdAndUserId(11L, 7L)).thenReturn(null)
+
+        assertThatThrownBy { service.get(7L, 11L) }
+            .isInstanceOf(AnalysisCaseNotFoundException::class.java)
+
+        verify(caseRepository).findByIdAndUserId(11L, 7L)
+        verify(documentRepository, never()).findAllByCaseId(anyLong())
+        verify(answerRepository, never()).findAllByCaseId(anyLong())
+    }
+
     private fun property(): HomeProperty =
         HomeProperty(
             id = 3L,
@@ -82,5 +148,24 @@ class AnalysisCaseServiceTests {
             propertyId = 3L,
             stage = AnalysisStage.BEFORE_CONTRACT,
             templateVersion = ANALYSIS_TEMPLATE_VERSION,
+        )
+
+    private fun document(documentType: String, originalFileName: String): AnalysisDocument =
+        AnalysisDocument(
+            id = 101L,
+            caseId = 11L,
+            documentType = documentType,
+            originalFileName = originalFileName,
+            mimeType = "application/pdf",
+            fileSize = 1024L,
+            content = byteArrayOf(1),
+        )
+
+    private fun answer(itemKey: String, checked: Boolean): AnalysisChecklistAnswer =
+        AnalysisChecklistAnswer(
+            id = 201L,
+            caseId = 11L,
+            itemKey = itemKey,
+            checked = checked,
         )
 }
