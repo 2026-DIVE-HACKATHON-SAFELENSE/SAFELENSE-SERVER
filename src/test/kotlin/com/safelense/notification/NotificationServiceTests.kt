@@ -10,7 +10,9 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
+import org.springframework.data.domain.PageRequest
 
 class NotificationServiceTests {
     private val repository = mock(NotificationRepository::class.java)
@@ -99,6 +101,88 @@ class NotificationServiceTests {
         )
     }
 
+    @Test
+    fun `lists size items and provides next cursor when another notification exists`() {
+        `when`(
+            repository.findByUserIdWithCursor(
+                7L,
+                null,
+                false,
+                PageRequest.of(0, 3),
+            ),
+        ).thenReturn(
+            listOf(
+                notification(id = 30L, targetType = NotificationTargetType.ANALYSIS_RESULT, targetId = "analysis-30"),
+                notification(id = 20L, readAt = Instant.parse("2026-07-20T10:00:00Z")),
+                notification(id = 10L),
+            ),
+        )
+        `when`(repository.countByUserIdAndReadAtIsNull(7L)).thenReturn(2L)
+
+        val result = service.list(userId = 7L, cursor = null, size = 2, unreadOnly = false)
+
+        assertThat(result.items).hasSize(2)
+        assertThat(result.items.map { it.id }).containsExactly(30L, 20L)
+        assertThat(result.hasNext).isTrue()
+        assertThat(result.nextCursor).isEqualTo(20L)
+        assertThat(result.unreadCount).isEqualTo(2L)
+        assertThat(result.items[0])
+            .extracting(
+                NotificationItem::id,
+                NotificationItem::type,
+                NotificationItem::title,
+                NotificationItem::body,
+                NotificationItem::isRead,
+                NotificationItem::createdAt,
+                NotificationItem::targetType,
+                NotificationItem::targetId,
+            )
+            .containsExactly(
+                30L,
+                NotificationType.ANALYSIS,
+                "분석이 완료되었어요",
+                "결과를 확인해 보세요.",
+                false,
+                Instant.parse("2026-07-20T09:00:00Z"),
+                NotificationTargetType.ANALYSIS_RESULT,
+                "analysis-30",
+            )
+        verify(repository).findByUserIdWithCursor(7L, null, false, PageRequest.of(0, 3))
+    }
+
+    @Test
+    fun `returns null next cursor on the final filtered page and counts all unread notifications`() {
+        `when`(
+            repository.findByUserIdWithCursor(
+                7L,
+                30L,
+                true,
+                PageRequest.of(0, 3),
+            ),
+        ).thenReturn(listOf(notification(id = 20L)))
+        `when`(repository.countByUserIdAndReadAtIsNull(7L)).thenReturn(4L)
+
+        val result = service.list(userId = 7L, cursor = 30L, size = 2, unreadOnly = true)
+
+        assertThat(result.items.map { it.id }).containsExactly(20L)
+        assertThat(result.hasNext).isFalse()
+        assertThat(result.nextCursor).isNull()
+        assertThat(result.unreadCount).isEqualTo(4L)
+    }
+
+    @Test
+    fun `rejects nonpositive cursor and out of range size`() {
+        assertThatThrownBy { service.list(userId = 7L, cursor = 0L, size = 20, unreadOnly = false) }
+            .isInstanceOf(InvalidNotificationRequestException::class.java)
+        assertThatThrownBy { service.list(userId = 7L, cursor = -1L, size = 20, unreadOnly = false) }
+            .isInstanceOf(InvalidNotificationRequestException::class.java)
+        assertThatThrownBy { service.list(userId = 7L, cursor = null, size = 0, unreadOnly = false) }
+            .isInstanceOf(InvalidNotificationRequestException::class.java)
+        assertThatThrownBy { service.list(userId = 7L, cursor = null, size = 101, unreadOnly = false) }
+            .isInstanceOf(InvalidNotificationRequestException::class.java)
+        verifyNoInteractions(repository)
+    }
+
     private fun assertRejected(command: NotificationCreateCommand) {
         assertThatThrownBy { service.create(7L, command) }
             .isInstanceOf(InvalidNotificationRequestException::class.java)
@@ -117,5 +201,23 @@ class NotificationServiceTests {
             body = body,
             targetType = targetType,
             targetId = targetId,
+        )
+
+    private fun notification(
+        id: Long,
+        readAt: Instant? = null,
+        targetType: NotificationTargetType? = null,
+        targetId: String? = null,
+    ): Notification =
+        Notification(
+            id = id,
+            userId = 7L,
+            type = NotificationType.ANALYSIS,
+            title = "분석이 완료되었어요",
+            body = "결과를 확인해 보세요.",
+            targetType = targetType,
+            targetId = targetId,
+            readAt = readAt,
+            createdAt = Instant.parse("2026-07-20T09:00:00Z"),
         )
 }

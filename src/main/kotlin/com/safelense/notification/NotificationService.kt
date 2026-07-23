@@ -3,6 +3,7 @@ package com.safelense.notification
 
 import java.time.Instant
 import org.springframework.stereotype.Service
+import org.springframework.data.domain.PageRequest
 import org.springframework.transaction.annotation.Transactional
 
 data class NotificationCreateCommand(
@@ -14,6 +15,24 @@ data class NotificationCreateCommand(
 )
 
 class InvalidNotificationRequestException : RuntimeException()
+
+data class NotificationItem(
+    val id: Long,
+    val type: NotificationType,
+    val title: String,
+    val body: String,
+    val isRead: Boolean,
+    val createdAt: Instant,
+    val targetType: NotificationTargetType?,
+    val targetId: String?,
+)
+
+data class NotificationPage(
+    val items: List<NotificationItem>,
+    val nextCursor: Long?,
+    val hasNext: Boolean,
+    val unreadCount: Long,
+)
 
 @Service
 class NotificationService(
@@ -41,6 +60,40 @@ class NotificationService(
                 targetId = targetId,
                 createdAt = Instant.now(),
             ),
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun list(userId: Long, cursor: Long?, size: Int, unreadOnly: Boolean): NotificationPage {
+        if (cursor != null && cursor <= 0 || size !in 1..100) {
+            throw InvalidNotificationRequestException()
+        }
+
+        val notifications = notificationRepository.findByUserIdWithCursor(
+            userId = userId,
+            cursor = cursor,
+            unreadOnly = unreadOnly,
+            pageable = PageRequest.of(0, size + 1),
+        )
+        val hasNext = notifications.size > size
+        val items = notifications.take(size).map { notification ->
+            NotificationItem(
+                id = requireNotNull(notification.id),
+                type = notification.type,
+                title = notification.title,
+                body = notification.body,
+                isRead = notification.readAt != null,
+                createdAt = notification.createdAt,
+                targetType = notification.targetType,
+                targetId = notification.targetId,
+            )
+        }
+
+        return NotificationPage(
+            items = items,
+            nextCursor = if (hasNext) items.last().id else null,
+            hasNext = hasNext,
+            unreadCount = notificationRepository.countByUserIdAndReadAtIsNull(userId),
         )
     }
 }
