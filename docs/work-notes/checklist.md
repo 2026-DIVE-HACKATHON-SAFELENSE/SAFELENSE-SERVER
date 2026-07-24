@@ -76,6 +76,9 @@
 - [x] AWS SDK SSM 로더와 PostgreSQL 의존성·스키마 전환을 구현한다.
 - [x] S3 아티팩트·systemd·OIDC Run Command 배포 정의와 최소 IAM 정책을 추가한다.
 - [x] 집중 테스트, 전체 테스트, 실행 JAR와 배포 정의를 검증한다.
-- [ ] 변경 사항을 검토하고 main에 병합·푸시한다.
+- [x] 변경 사항을 검토하고 main에 병합·푸시한다.
 - [x] prod Flyway 사전 점검과 일반 웹 기동에서 필요한 `RestClient.Builder` 빈을 회귀 테스트로 고정한다.
-- [ ] 명시적 `RestClient.Builder` 설정을 추가하고 main 자동 배포를 재검증한다.
+- [x] 명시적 `RestClient.Builder` 설정을 추가하고 main 자동 배포를 재검증한다.
+- [x] Hibernate가 SSM DB URL을 정보 로그에 남기지 않도록 운영 로그 수준을 고정한다.
+- [x] HTTPS 프록시 주소를 반영하는 공개 Swagger UI와 OpenAPI JSON을 추가한다.
+- [x] 운영 HTTPS 도메인에서 Swagger UI와 OpenAPI JSON을 검증한다.
