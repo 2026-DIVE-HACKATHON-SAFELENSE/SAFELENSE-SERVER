@@ -1,6 +1,10 @@
 server:
   forward-headers-strategy: framework
 
+logging:
+  level:
+    org.hibernate.orm.connections.pooling: WARN
+
 spring:
   application:
     name: safelense
