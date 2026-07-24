@@ -107,7 +107,7 @@ Expected: `BUILD SUCCESSFUL`.
 
 - [x] **Step 1: 배포 계약 정적 테스트를 작성한다.**
 
-`DeploymentContractTests`는 workflow가 `main` push, OIDC `id-token: write`, 네 GitHub Variable만 사용하고 장기 access key·SSH·비밀값을 포함하지 않는지 검사한다. Run Command가 새 JAR를 staging path에 다운로드하고 `SPRING_PROFILES_ACTIVE=prod`와 `--spring.main.web-application-type=none`으로 Flyway validate-and-migrate를 service 교체 전에 실행하며 실패하면 중단하는지 검사한다. 서비스 파일이 `SPRING_PROFILES_ACTIVE=prod`, `AWS_REGION=ap-northeast-2`, `/opt/safelense/safelense-server.jar`, restart 정책을 포함하는지도 검사한다.
+`DeploymentContractTests`는 workflow가 `main` push, OIDC `id-token: write`, 네 GitHub Variable만 사용하고 장기 access key·SSH·비밀값을 포함하지 않는지 검사한다. Run Command가 새 JAR를 staging path에 다운로드하고 `SPRING_PROFILES_ACTIVE=prod`와 `--server.port=-1`으로 Flyway validate-and-migrate를 service 교체 전에 실행하며 실패하면 중단하는지 검사한다. 서비스 파일이 `SPRING_PROFILES_ACTIVE=prod`, `AWS_REGION=ap-northeast-2`, `/opt/safelense/safelense-server.jar`, restart 정책을 포함하는지도 검사한다.
 
 - [x] **Step 2: 계약 테스트가 실패하는지 확인한다.**
 
@@ -117,7 +117,7 @@ Expected: workflow와 service file이 없어 실패한다.
 
 - [x] **Step 3: workflow와 systemd unit을 구현한다.**
 
-workflow는 checkout, Java 24 setup, `./gradlew bootJar`, `aws-actions/configure-aws-credentials@v6` OIDC 설정, `aws s3 cp`로 `releases/safelense-server.jar`와 systemd unit 업로드, `aws ssm send-command` 순서로 수행한다. Run Command는 Amazon Linux 2023에 지원 Java 25를 설치하고 서비스 계정을 만든 뒤 JAR를 임시 파일로 내려받는다. 그 JAR를 `SPRING_PROFILES_ACTIVE=prod`와 `--spring.main.web-application-type=none`으로 먼저 실행해 Flyway의 validate-and-migrate를 수행하고, 실패하면 `set -e`로 서비스 교체 이전에 끝낸다. 성공하면 권한을 지정한 뒤 atomically 이동하고 S3의 service unit을 `/etc/systemd/system/safelense.service`에 설치한다. `daemon-reload`, `enable --now`, `restart`, `is-active --quiet`를 실행하고 workflow가 command 완료를 기다린다. README는 Java runtime, AWS CLI v2 사전 조건, GitHub Variables, 새 PostgreSQL 전제와 Flyway 선행 점검을 기록한다.
+workflow는 checkout, Java 24 setup, `./gradlew bootJar`, `aws-actions/configure-aws-credentials@v6` OIDC 설정, `aws s3 cp`로 `releases/safelense-server.jar`와 systemd unit 업로드, `aws ssm send-command` 순서로 수행한다. Run Command는 Amazon Linux 2023에 지원 Java 25를 설치하고 서비스 계정을 만든 뒤 JAR를 임시 파일로 내려받는다. 그 JAR를 `SPRING_PROFILES_ACTIVE=prod`와 `--server.port=-1`로 먼저 실행해 web application context를 유지한 Flyway validate-and-migrate를 수행하고, 실패하면 `set -e`로 서비스 교체 이전에 끝낸다. 성공하면 권한을 지정한 뒤 atomically 이동하고 S3의 service unit을 `/etc/systemd/system/safelense.service`에 설치한다. `daemon-reload`, `enable --now`, `restart`, `is-active --quiet`를 실행하고 workflow가 command 완료를 기다린다. README는 Java runtime, AWS CLI v2 사전 조건, GitHub Variables, 새 PostgreSQL 전제와 Flyway 선행 점검을 기록한다.
 
 - [x] **Step 4: 배포 계약 테스트를 통과시킨다.**
 

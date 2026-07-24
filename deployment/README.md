@@ -4,7 +4,7 @@
 
 워크플로는 애플리케이션 비밀값을 읽지 않는다. EC2의 `safelense` 계정이 prod로 실행되며 SSM Parameter Store의 `/safelense/prod/*` SecureString을 시작 전에 읽는다.
 
-배포 명령은 새 JAR를 임시 경로에 내려받은 뒤 non-web Spring Boot 모드로 한 번 실행한다. 이 단계에서 Flyway는 migration 이름을 검증하고 현재 Supabase PostgreSQL에 validate-and-migrate를 수행한다. 이 단계가 실패하면 systemd 서비스와 운영 JAR를 바꾸지 않는다.
+배포 명령은 새 JAR를 임시 경로에 내려받은 뒤 `server.port=-1`로 HTTP endpoint를 열지 않으면서 web application context를 한 번 초기화한다. 이 단계에서 Flyway는 migration 이름을 검증하고 현재 Supabase PostgreSQL에 validate-and-migrate를 수행한다. 이 단계가 실패하면 systemd 서비스와 운영 JAR를 바꾸지 않는다.
 
 사전 조건은 다음과 같다.
 

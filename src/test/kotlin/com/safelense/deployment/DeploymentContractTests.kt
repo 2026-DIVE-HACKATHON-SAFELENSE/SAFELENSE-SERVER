@@ -22,7 +22,7 @@ class DeploymentContractTests {
         assertThat(workflow).contains("releases/safelense-server.jar")
         assertThat(workflow).contains("Run Flyway migration check")
         assertThat(workflow).contains("SPRING_PROFILES_ACTIVE=prod")
-        assertThat(workflow).contains("--spring.main.web-application-type=none")
+        assertThat(workflow).contains("--server.port=-1")
         assertThat(workflow).contains("--no-progress")
         assertThat(workflow).contains("tail -n 200 /tmp/safelense-flyway.log")
         assertThat(workflow).contains("systemctl is-active --quiet safelense")
