@@ -75,3 +75,4 @@
 - 2026-07-24. `CorsFilter` 집중 테스트는 허용 출처의 `Authorization`, `Content-Type`, `Idempotency-Key` 사전 요청 성공과 비허용 출처의 `403` 거부를 검증한다. `./gradlew test --tests 'com.safelense.auth.config.SecurityConfigCorsTests' --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다.
 - 2026-07-24. `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했고, `git diff HEAD~1 --check`와 `main...HEAD` 변경 범위 검토에서 공백 오류나 CORS 범위 밖의 코드 변경을 발견하지 못했다.
 - 2026-07-24. YAML 목록은 `@Value`보다 `@ConfigurationProperties`로 바인딩해야 목록 프로퍼티의 런타임 주입을 명확하게 보장한다. `CorsPropertiesTests`를 먼저 실패시킨 뒤 `CorsProperties`와 `SecurityConfig`의 타입 안전한 주입으로 통과시켰다.
+- 2026-07-24. 목록 바인딩 보완 후 `./gradlew test bootJar --rerun-tasks`가 다시 `BUILD SUCCESSFUL`로 통과했고, `git diff --check main...HEAD`에서도 공백 오류가 없었다.
