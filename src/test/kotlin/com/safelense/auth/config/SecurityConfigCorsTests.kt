@@ -15,11 +15,11 @@ import org.springframework.web.filter.CorsFilter
 class SecurityConfigCorsTests {
     private val config = SecurityConfig(
         jwtAuthenticationFilter = mock(JwtAuthenticationFilter::class.java),
-        allowedOrigins = listOf(
+        corsProperties = CorsProperties(listOf(
             "http://localhost:8081",
             "https://safelense-fe.pages.dev",
             "https://safelense.site",
-        ),
+        )),
     )
     private val corsFilter = CorsFilter(config.corsConfigurationSource())
 

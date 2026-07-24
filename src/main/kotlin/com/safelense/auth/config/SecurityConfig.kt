@@ -1,7 +1,7 @@
-// 인증 발급 경로에 익명 접근을 허용하는 API 보안 설정
+// 인증 발급 경로와 허용 출처 CORS 정책을 적용하는 API 보안 설정
 package com.safelense.auth.config
 
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
@@ -19,14 +19,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
+@EnableConfigurationProperties(CorsProperties::class)
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
-    @param:Value("\${app.cors.allowed-origins}") private val allowedOrigins: List<String>,
+    private val corsProperties: CorsProperties,
 ) {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration().apply {
-            allowedOrigins = this@SecurityConfig.allowedOrigins
+            allowedOrigins = corsProperties.allowedOrigins
             allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             allowedHeaders = listOf(
                 HttpHeaders.AUTHORIZATION,
