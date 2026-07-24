@@ -1,0 +1,18 @@
+[Unit]
+Description=SAFELENSE Spring Boot API
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=safelense
+Group=safelense
+WorkingDirectory=/opt/safelense
+Environment=SPRING_PROFILES_ACTIVE=prod
+Environment=AWS_REGION=ap-northeast-2
+ExecStart=/usr/bin/java -jar /opt/safelense/safelense-server.jar
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

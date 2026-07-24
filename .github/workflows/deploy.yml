@@ -1,0 +1,118 @@
+name: Deploy SAFELENSE server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: safelense-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+      DEPLOY_ARTIFACT_BUCKET: ${{ vars.DEPLOY_ARTIFACT_BUCKET }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Java 24
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "24"
+
+      - name: Build application JAR
+        run: ./gradlew bootJar
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: "380906049995"
+
+      - name: Upload deployment artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar_file="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-plain.jar' -print -quit)"
+          test -n "${jar_file}"
+          aws s3 cp "${jar_file}" "s3://${DEPLOY_ARTIFACT_BUCKET}/releases/safelense-server.jar"
+          aws s3 cp deployment/systemd/safelense.service "s3://${DEPLOY_ARTIFACT_BUCKET}/releases/safelense.service"
+
+      - name: Deploy through SSM Run Command
+        shell: bash
+        run: |
+          set -euo pipefail
+          command_script="$(base64 --wrap=0 <<'SCRIPT'
+          set -euo pipefail
+
+          id -u safelense >/dev/null 2>&1 || useradd --system --home-dir /opt/safelense --shell /usr/sbin/nologin safelense
+          install -d -o safelense -g safelense -m 0755 /opt/safelense
+          command -v aws >/dev/null
+          if ! /usr/bin/java -version 2>&1 | grep -q '"25\.'; then
+            dnf install -y java-25-amazon-corretto-headless
+          fi
+          /usr/bin/java -version
+
+          staged_jar="$(mktemp /opt/safelense/safelense-server.jar.XXXXXX)"
+          staged_service="$(mktemp /tmp/safelense.service.XXXXXX)"
+          trap 'rm -f "${staged_jar}" "${staged_service}"' EXIT
+
+          aws s3 cp "s3://${{ vars.DEPLOY_ARTIFACT_BUCKET }}/releases/safelense-server.jar" "${staged_jar}"
+          aws s3 cp "s3://${{ vars.DEPLOY_ARTIFACT_BUCKET }}/releases/safelense.service" "${staged_service}"
+          chown safelense:safelense "${staged_jar}"
+          chmod 0644 "${staged_jar}"
+
+          echo "Run Flyway migration check"
+          runuser -u safelense -- env SPRING_PROFILES_ACTIVE=prod AWS_REGION=ap-northeast-2 /usr/bin/java -jar "${staged_jar}" --spring.main.web-application-type=none
+
+          install -m 0644 "${staged_service}" /etc/systemd/system/safelense.service
+          rm -f "${staged_service}"
+          mv "${staged_jar}" /opt/safelense/safelense-server.jar
+          chown safelense:safelense /opt/safelense/safelense-server.jar
+          systemctl daemon-reload
+          systemctl enable --now safelense
+          systemctl restart safelense
+          systemctl is-active --quiet safelense
+          trap - EXIT
+          SCRIPT
+          )"
+          python3 - "${command_script}" "${EC2_INSTANCE_ID}" <<'PY' > /tmp/safelense-run-command.json
+          import json
+          import sys
+
+          command = f"echo {sys.argv[1]} | base64 --decode | bash"
+          print(json.dumps({
+              "DocumentName": "AWS-RunShellScript",
+              "InstanceIds": [sys.argv[2]],
+              "Parameters": {"commands": [command]},
+          }))
+          PY
+          command_id="$(aws ssm send-command \
+            --cli-input-json file:///tmp/safelense-run-command.json \
+            --query 'Command.CommandId' \
+            --output text)"
+          if ! aws ssm wait command-executed --command-id "${command_id}" --instance-id "${EC2_INSTANCE_ID}"; then
+            aws ssm get-command-invocation \
+              --command-id "${command_id}" \
+              --instance-id "${EC2_INSTANCE_ID}" \
+              --query '{Status:Status,StandardOutputContent:StandardOutputContent,StandardErrorContent:StandardErrorContent}' \
+              --output json
+            exit 1
+          fi
+          aws ssm get-command-invocation \
+            --command-id "${command_id}" \
+            --instance-id "${EC2_INSTANCE_ID}" \
+            --query '{Status:Status,StandardOutputContent:StandardOutputContent,StandardErrorContent:StandardErrorContent}' \
+            --output json

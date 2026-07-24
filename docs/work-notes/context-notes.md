@@ -77,3 +77,8 @@
 - 2026-07-24. YAML 목록은 `@Value`보다 `@ConfigurationProperties`로 바인딩해야 목록 프로퍼티의 런타임 주입을 명확하게 보장한다. `CorsPropertiesTests`를 먼저 실패시킨 뒤 `CorsProperties`와 `SecurityConfig`의 타입 안전한 주입으로 통과시켰다.
 - 2026-07-24. 목록 바인딩 보완 후 `./gradlew test bootJar --rerun-tasks`가 다시 `BUILD SUCCESSFUL`로 통과했고, `git diff --check main...HEAD`에서도 공백 오류가 없었다.
 - 2026-07-24. prod는 `/safelense/prod/`의 8개 SecureString을 애플리케이션 초기화 전에 읽고 local은 기존 환경 변수 방식을 유지하도록 결정했다. Supabase PostgreSQL은 새 Flyway 이력을 전제로 MySQL 전용 V1~V6 SQL과 `MEDIUMBLOB` 매핑을 PostgreSQL로 전환한다.
+- 2026-07-24. `SsmEnvironmentPostProcessor`는 prod에서만 AWS SDK 기본 자격 증명 체인과 `ap-northeast-2` SSM `GetParameters`를 사용해 8개 SecureString을 기존 환경 변수 이름으로 가장 높은 우선순위 PropertySource에 넣는다. 값을 로그에 쓰지 않고 누락·조회 실패는 기동 실패로 처리한다.
+- 2026-07-24. Flyway V1~V6는 새 Supabase PostgreSQL용 identity, `TIMESTAMP WITH TIME ZONE`, `BYTEA`, 별도 인덱스, `updated_at` trigger로 바꿨다. 적용된 MySQL Flyway 이력이나 데이터는 자동 이전하지 않으며 별도 이전이 필요하다.
+- 2026-07-24. `main` push 배포는 GitHub OIDC와 SSM Run Command만 사용한다. EC2의 SSM 역할이 staged JAR를 prod non-web 모드로 먼저 실행해 Flyway validate-and-migrate를 통과한 뒤에만 systemd artifact를 교체한다. DB·Kakao·JWT 값은 GitHub에 복제하지 않는다.
+- 2026-07-24. 대상 EC2는 Amazon Linux 2023이고 Java가 없었다. AL2023의 Java 24는 지원 종료라, Java 24 target JAR과 호환되는 지원 Java 25를 SSM 명령에서 설치하도록 했다. AWS CLI v2와 SSM 관리 노드·IAM 권한은 인프라 작업에서 확인됐다.
+- 2026-07-24. `./gradlew test --tests 'com.safelense.config.SsmEnvironmentPostProcessorTests' --tests 'com.safelense.FlywayMigrationContractTests' --tests 'com.safelense.FlywayPostgreSqlMigrationTests' --tests 'com.safelense.deployment.DeploymentContractTests' --rerun-tasks`와 `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다. 실제 PostgreSQL Testcontainers 테스트는 이 개발 환경에 Docker가 없어 1건 skip됐고 GitHub Actions Docker 환경에서 실행된다.

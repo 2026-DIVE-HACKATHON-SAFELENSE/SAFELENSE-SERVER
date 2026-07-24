@@ -6,7 +6,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.Lob
 import jakarta.persistence.Table
 
 @Entity
@@ -25,7 +24,6 @@ class AnalysisDocument(
     var mimeType: String,
     @Column(name = "file_size", nullable = false)
     var fileSize: Long,
-    @Lob
-    @Column(nullable = false, columnDefinition = "MEDIUMBLOB")
+    @Column(nullable = false, columnDefinition = "bytea")
     var content: ByteArray,
 )

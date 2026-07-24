@@ -15,7 +15,7 @@ class AnalysisInputMigrationTests {
         assertThat(sql).contains("CREATE TABLE analysis_cases")
         assertThat(sql).contains("CREATE TABLE analysis_documents")
         assertThat(sql).contains("CREATE TABLE analysis_checklist_answers")
-        assertThat(sql).contains("MEDIUMBLOB NOT NULL")
+        assertThat(sql).contains("content BYTEA NOT NULL")
         assertThat(sql).contains("UNIQUE (case_id, document_type)")
         assertThat(sql).contains("UNIQUE (case_id, item_key)")
         assertThat(sql).contains("FOREIGN KEY (property_id) REFERENCES home_properties(id)")

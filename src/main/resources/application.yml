@@ -14,6 +14,8 @@ spring:
       ddl-auto: none
   flyway:
     enabled: true
+    validate-on-migrate: true
+    validate-migration-naming: true
 
 app:
   cors:

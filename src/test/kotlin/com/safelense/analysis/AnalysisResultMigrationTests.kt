@@ -14,8 +14,8 @@ class AnalysisResultMigrationTests {
         val sql = migration.inputStream.bufferedReader().use { it.readText() }
         assertThat(sql).contains("CREATE TABLE analysis_results")
         assertThat(sql).contains("UNIQUE (case_id)")
-        assertThat(sql).contains("INDEX idx_analysis_results_user_id_id (user_id, id)")
-        assertThat(sql).contains("INDEX idx_analysis_results_user_stage_id (user_id, stage, id)")
+        assertThat(sql).contains("CREATE INDEX idx_analysis_results_user_id_id ON analysis_results (user_id, id)")
+        assertThat(sql).contains("CREATE INDEX idx_analysis_results_user_stage_id ON analysis_results (user_id, stage, id)")
         assertThat(sql).contains("FOREIGN KEY (case_id) REFERENCES analysis_cases(id)")
         assertThat(sql).contains("FOREIGN KEY (user_id) REFERENCES users(id)")
     }
