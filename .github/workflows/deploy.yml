@@ -69,13 +69,18 @@ jobs:
           staged_service="$(mktemp /tmp/safelense.service.XXXXXX)"
           trap 'rm -f "${staged_jar}" "${staged_service}"' EXIT
 
-          aws s3 cp "s3://${{ vars.DEPLOY_ARTIFACT_BUCKET }}/releases/safelense-server.jar" "${staged_jar}"
-          aws s3 cp "s3://${{ vars.DEPLOY_ARTIFACT_BUCKET }}/releases/safelense.service" "${staged_service}"
+          aws s3 cp "s3://${{ vars.DEPLOY_ARTIFACT_BUCKET }}/releases/safelense-server.jar" "${staged_jar}" --no-progress
+          aws s3 cp "s3://${{ vars.DEPLOY_ARTIFACT_BUCKET }}/releases/safelense.service" "${staged_service}" --no-progress
           chown safelense:safelense "${staged_jar}"
           chmod 0644 "${staged_jar}"
 
           echo "Run Flyway migration check"
-          runuser -u safelense -- env SPRING_PROFILES_ACTIVE=prod AWS_REGION=ap-northeast-2 /usr/bin/java -jar "${staged_jar}" --spring.main.web-application-type=none
+          if ! runuser -u safelense -- env SPRING_PROFILES_ACTIVE=prod AWS_REGION=ap-northeast-2 /usr/bin/java -jar "${staged_jar}" --spring.main.web-application-type=none > /tmp/safelense-flyway.log 2>&1; then
+            tail -n 200 /tmp/safelense-flyway.log
+            exit 1
+          fi
+          tail -n 200 /tmp/safelense-flyway.log
+          rm -f /tmp/safelense-flyway.log
 
           install -m 0644 "${staged_service}" /etc/systemd/system/safelense.service
           rm -f "${staged_service}"
