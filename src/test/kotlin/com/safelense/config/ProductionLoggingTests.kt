@@ -12,5 +12,6 @@ class ProductionLoggingTests {
         val applicationConfiguration = Files.readString(Path.of("src/main/resources/application.yml"))
 
         assertThat(applicationConfiguration).contains("org.hibernate.orm.connections.pooling: WARN")
+        assertThat(applicationConfiguration).contains("org.flywaydb.core.FlywayExecutor: WARN")
     }
 }
