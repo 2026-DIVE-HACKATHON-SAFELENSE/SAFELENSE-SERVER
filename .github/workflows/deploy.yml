@@ -75,7 +75,7 @@ jobs:
           chmod 0644 "${staged_jar}"
 
           echo "Run Flyway migration check"
-          if ! runuser -u safelense -- env SPRING_PROFILES_ACTIVE=prod AWS_REGION=ap-northeast-2 /usr/bin/java -jar "${staged_jar}" --server.port=-1 > /tmp/safelense-flyway.log 2>&1; then
+          if ! runuser -u safelense -- env SPRING_PROFILES_ACTIVE=prod AWS_REGION=ap-northeast-2 /usr/bin/java -jar "${staged_jar}" --spring.main.web-application-type=none > /tmp/safelense-flyway.log 2>&1; then
             tail -n 200 /tmp/safelense-flyway.log
             exit 1
           fi

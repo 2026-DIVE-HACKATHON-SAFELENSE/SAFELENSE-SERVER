@@ -2,6 +2,7 @@
 package com.safelense.auth.config
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
@@ -20,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebSecurity
 @EnableConfigurationProperties(CorsProperties::class)
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class SecurityConfig(
     private val jwtAuthenticationFilter: JwtAuthenticationFilter,
     private val corsProperties: CorsProperties,
