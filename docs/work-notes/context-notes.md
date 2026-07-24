@@ -71,3 +71,4 @@
 - 2026-07-24. TDD로 마이그레이션·규칙 엔진·실행 서비스·MVC·입력 잠금 테스트의 실패를 각각 확인한 뒤 최소 구현으로 통과시켰다.
 - 2026-07-24. `./gradlew test --tests 'com.safelense.analysis.*' --rerun-tasks`와 `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다. `git diff --check`도 오류 없이 통과했다.
 - 2026-07-24. CORS 허용 출처는 사용자 요청에 따라 `http://localhost:8081`, `https://safelense-fe.pages.dev`, `https://safelense.site`로 고정한다. JWT는 `Authorization` 헤더로 보내므로 CORS 자격 증명은 허용하지 않는다.
+- 2026-07-24. 전체 API에서 체크리스트 교체가 `PUT`을 사용하므로 CORS 허용 메서드에 `PUT`을 포함한다.

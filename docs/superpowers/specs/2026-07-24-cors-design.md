@@ -10,7 +10,7 @@
 - `https://safelense-fe.pages.dev`
 - `https://safelense.site`
 
-허용 메서드는 `GET`, `POST`, `PATCH`, `DELETE`, `OPTIONS`다. 허용 헤더는 `Authorization`, `Content-Type`, `Idempotency-Key`다. JWT는 요청 헤더로 전송하므로 쿠키 기반 자격 증명은 사용하지 않으며 `allowCredentials`를 활성화하지 않는다.
+허용 메서드는 `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`다. 허용 헤더는 `Authorization`, `Content-Type`, `Idempotency-Key`다. JWT는 요청 헤더로 전송하므로 쿠키 기반 자격 증명은 사용하지 않으며 `allowCredentials`를 활성화하지 않는다.
 
 ## 설계
 
