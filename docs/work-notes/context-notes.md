@@ -73,3 +73,4 @@
 - 2026-07-24. CORS 허용 출처는 사용자 요청에 따라 `http://localhost:8081`, `https://safelense-fe.pages.dev`, `https://safelense.site`로 고정한다. JWT는 `Authorization` 헤더로 보내므로 CORS 자격 증명은 허용하지 않는다.
 - 2026-07-24. 전체 API에서 체크리스트 교체가 `PUT`을 사용하므로 CORS 허용 메서드에 `PUT`을 포함한다.
 - 2026-07-24. `CorsFilter` 집중 테스트는 허용 출처의 `Authorization`, `Content-Type`, `Idempotency-Key` 사전 요청 성공과 비허용 출처의 `403` 거부를 검증한다. `./gradlew test --tests 'com.safelense.auth.config.SecurityConfigCorsTests' --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다.
+- 2026-07-24. `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했고, `git diff HEAD~1 --check`와 `main...HEAD` 변경 범위 검토에서 공백 오류나 CORS 범위 밖의 코드 변경을 발견하지 못했다.
