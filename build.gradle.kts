@@ -24,6 +24,7 @@ dependencies {
     implementation("com.github.librepdf:openpdf:3.0.5")
     implementation("org.webjars.npm:nanum-gothic-coding:4.0.0")
     implementation("org.flywaydb:flyway-database-postgresql")
+    implementation("org.springframework.boot:spring-boot-flyway")
     implementation("software.amazon.awssdk:ssm")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

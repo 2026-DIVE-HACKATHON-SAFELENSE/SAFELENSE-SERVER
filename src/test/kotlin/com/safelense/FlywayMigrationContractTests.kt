@@ -1,6 +1,8 @@
 // PostgreSQL용 Flyway 마이그레이션 파일의 순서와 문법 계약을 검증하는 테스트
 package com.safelense
 
+import java.nio.file.Files
+import java.nio.file.Path
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.core.io.ClassPathResource
@@ -16,6 +18,12 @@ class FlywayMigrationContractTests {
             6 -> "V6__create_analysis_results.sql"
             else -> "V7__add_analysis_execution_audit.sql"
         }
+    }
+
+    @Test
+    fun `includes the Spring Boot Flyway auto-configuration module`() {
+        assertThat(Files.readString(Path.of("build.gradle.kts")))
+            .contains("org.springframework.boot:spring-boot-flyway")
     }
 
     @Test
