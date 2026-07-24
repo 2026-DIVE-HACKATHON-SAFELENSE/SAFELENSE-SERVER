@@ -4,6 +4,7 @@ package com.safelense.auth.kakao
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
@@ -17,6 +18,16 @@ import org.springframework.test.web.client.response.MockRestResponseCreators.wit
 import org.springframework.web.client.RestClient
 
 class KakaoHttpApiClientTests {
+    private val contextRunner = ApplicationContextRunner()
+        .withUserConfiguration(RestClientConfig::class.java)
+
+    @Test
+    fun `provides the RestClient builder required by the Kakao API client`() {
+        contextRunner.run { context ->
+            assertThat(context).hasSingleBean(RestClient.Builder::class.java)
+        }
+    }
+
     @Test
     fun `exchanges an authorization code then retrieves a Kakao user`() {
         val builder = RestClient.builder()

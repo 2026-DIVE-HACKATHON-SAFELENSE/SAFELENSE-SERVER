@@ -77,3 +77,5 @@
 - [x] S3 아티팩트·systemd·OIDC Run Command 배포 정의와 최소 IAM 정책을 추가한다.
 - [x] 집중 테스트, 전체 테스트, 실행 JAR와 배포 정의를 검증한다.
 - [ ] 변경 사항을 검토하고 main에 병합·푸시한다.
+- [x] prod Flyway 사전 점검과 일반 웹 기동에서 필요한 `RestClient.Builder` 빈을 회귀 테스트로 고정한다.
+- [ ] 명시적 `RestClient.Builder` 설정을 추가하고 main 자동 배포를 재검증한다.
