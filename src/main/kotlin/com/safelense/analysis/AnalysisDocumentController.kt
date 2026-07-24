@@ -1,6 +1,8 @@
 // 인증 사용자의 분석 서류 업로드·삭제 API를 제공하는 컨트롤러
 package com.safelense.analysis
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
@@ -13,11 +15,13 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 
+@Tag(name = "분석 서류", description = "분석에 필요한 PDF와 이미지 서류를 업로드하거나 삭제합니다.")
 @RestController
 @RequestMapping("/api/v1/analysis-cases/{caseId}/documents")
 class AnalysisDocumentController(
     private val service: AnalysisDocumentService,
 ) {
+    @Operation(summary = "분석 서류 업로드", description = "PDF, JPEG, PNG 파일을 문서 종류별로 업로드하거나 교체합니다. 최대 크기는 10MiB입니다.")
     @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     fun upload(
         authentication: Authentication,
@@ -27,6 +31,7 @@ class AnalysisDocumentController(
     ): AnalysisDocumentUploadResult =
         service.upload(authentication.principal as Long, caseId, documentType, file)
 
+    @Operation(summary = "분석 서류 삭제", description = "분석 케이스에 업로드된 서류 한 건을 삭제합니다.")
     @DeleteMapping("/{documentId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     fun delete(

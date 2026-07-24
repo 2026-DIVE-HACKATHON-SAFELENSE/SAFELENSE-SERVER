@@ -1,6 +1,7 @@
 // 계약 단계별 서류 슬롯과 체크리스트 정의를 제공하는 불변 카탈로그
 package com.safelense.analysis
 
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.stereotype.Component
 
 const val ANALYSIS_TEMPLATE_VERSION = "2026-07-24-v1"
@@ -11,23 +12,27 @@ enum class AnalysisStage {
     AFTER_CONTRACT,
 }
 
+@Schema(description = "분석 단계에서 요구하는 서류 템플릿")
 data class AnalysisDocumentTemplate(
     val documentType: String,
     val label: String,
     val required: Boolean,
 )
 
+@Schema(description = "체크리스트 항목 템플릿")
 data class AnalysisChecklistItemTemplate(
     val itemKey: String,
     val label: String,
 )
 
+@Schema(description = "체크리스트 섹션 템플릿")
 data class AnalysisChecklistSectionTemplate(
     val sectionKey: String,
     val label: String,
     val items: List<AnalysisChecklistItemTemplate>,
 )
 
+@Schema(description = "계약 단계별 분석 서류와 체크리스트 템플릿")
 data class AnalysisTemplate(
     val stage: AnalysisStage,
     val version: String,

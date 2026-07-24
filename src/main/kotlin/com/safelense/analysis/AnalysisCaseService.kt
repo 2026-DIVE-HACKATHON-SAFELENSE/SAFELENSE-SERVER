@@ -3,6 +3,7 @@ package com.safelense.analysis
 
 import com.safelense.property.HomePropertyNotFoundException
 import com.safelense.property.HomePropertyRepository
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -11,13 +12,19 @@ data class AnalysisCaseCreateCommand(
     val propertyId: Long,
 )
 
+@Schema(description = "생성된 분석 케이스 요약")
 data class AnalysisCaseCreated(
+    @field:Schema(description = "분석 케이스 ID", example = "42")
     val id: Long,
+    @field:Schema(description = "연결된 내 집 정보 ID", example = "7")
     val propertyId: Long,
+    @field:Schema(description = "계약 단계", example = "BEFORE_CONTRACT")
     val stage: AnalysisStage,
+    @field:Schema(description = "적용된 분석 템플릿 버전", example = "2026-07-24-v1")
     val templateVersion: String,
 )
 
+@Schema(description = "분석 케이스에서 요구하는 서류 슬롯과 업로드 상태")
 data class AnalysisDocumentSlotView(
     val documentType: String,
     val label: String,
@@ -28,12 +35,15 @@ data class AnalysisDocumentSlotView(
     val fileSize: Long?,
 )
 
+@Schema(description = "저장된 체크리스트 답변")
 data class AnalysisChecklistAnswerView(
     val itemKey: String,
     val checked: Boolean,
 )
 
+@Schema(description = "분석 케이스의 서류와 체크리스트 입력 상태")
 data class AnalysisCaseView(
+    @field:Schema(description = "분석 케이스 ID", example = "42")
     val id: Long,
     val propertyId: Long,
     val stage: AnalysisStage,
