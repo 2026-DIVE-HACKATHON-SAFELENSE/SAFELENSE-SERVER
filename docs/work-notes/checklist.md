@@ -71,3 +71,9 @@
 - [x] Spring Security CORS 설정과 애플리케이션 출처 목록을 구현한다.
 - [x] CORS 집중 테스트와 전체 테스트를 검증한다.
 - [x] 변경 사항을 검토하고 커밋한다.
+- [ ] prod SSM 선행 로딩, PostgreSQL 전환, OIDC Run Command 배포 설계를 기록한다.
+- [ ] SSM 로더와 PostgreSQL 마이그레이션의 실패 테스트를 추가한다.
+- [ ] AWS SDK SSM 로더와 PostgreSQL 의존성·스키마 전환을 구현한다.
+- [ ] S3 아티팩트·systemd·OIDC Run Command 배포 정의와 최소 IAM 정책을 추가한다.
+- [ ] 집중 테스트, 전체 테스트, 실행 JAR와 배포 정의를 검증한다.
+- [ ] 변경 사항을 검토하고 main에 병합·푸시한다.

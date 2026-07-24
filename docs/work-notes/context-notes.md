@@ -76,3 +76,4 @@
 - 2026-07-24. `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했고, `git diff HEAD~1 --check`와 `main...HEAD` 변경 범위 검토에서 공백 오류나 CORS 범위 밖의 코드 변경을 발견하지 못했다.
 - 2026-07-24. YAML 목록은 `@Value`보다 `@ConfigurationProperties`로 바인딩해야 목록 프로퍼티의 런타임 주입을 명확하게 보장한다. `CorsPropertiesTests`를 먼저 실패시킨 뒤 `CorsProperties`와 `SecurityConfig`의 타입 안전한 주입으로 통과시켰다.
 - 2026-07-24. 목록 바인딩 보완 후 `./gradlew test bootJar --rerun-tasks`가 다시 `BUILD SUCCESSFUL`로 통과했고, `git diff --check main...HEAD`에서도 공백 오류가 없었다.
+- 2026-07-24. prod는 `/safelense/prod/`의 8개 SecureString을 애플리케이션 초기화 전에 읽고 local은 기존 환경 변수 방식을 유지하도록 결정했다. Supabase PostgreSQL은 새 Flyway 이력을 전제로 MySQL 전용 V1~V6 SQL과 `MEDIUMBLOB` 매핑을 PostgreSQL로 전환한다.
