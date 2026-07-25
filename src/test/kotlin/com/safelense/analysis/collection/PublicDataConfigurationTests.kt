@@ -30,6 +30,14 @@ class PublicDataConfigurationTests {
         }
     }
 
+    @Test
+    fun `keeps the existing positional base URL contract`() {
+        val properties = OpenAiProperties("openai-key", "gpt-5.6", "https://openai.test/v1")
+
+        assertThat(properties.baseUrl).isEqualTo("https://openai.test/v1")
+        assertThat(properties.embeddingModel).isEqualTo("text-embedding-3-small")
+    }
+
     @Configuration(proxyBeanMethods = false)
     @EnableConfigurationProperties(
         PublicDataProperties::class,

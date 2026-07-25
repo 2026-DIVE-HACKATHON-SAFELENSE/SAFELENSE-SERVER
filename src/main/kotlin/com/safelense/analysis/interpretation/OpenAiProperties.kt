@@ -7,6 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class OpenAiProperties(
     val apiKey: String,
     val model: String = "gpt-5.6",
-    val embeddingModel: String = "text-embedding-3-small",
     val baseUrl: String = "https://api.openai.com/v1",
+    val embeddingModel: String = "text-embedding-3-small",
 )
