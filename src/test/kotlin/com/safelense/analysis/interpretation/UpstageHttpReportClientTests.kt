@@ -44,6 +44,8 @@ class UpstageHttpReportClientTests {
             .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer test-key"))
             .andExpect(content().string(containsString("\"model\":\"solar-pro3\"")))
             .andExpect(content().string(containsString("\"messages\"")))
+            .andExpect(content().string(containsString("근거 ID는 evidenceIds 필드에만")))
+            .andExpect(content().string(containsString("숫자는 인용한 valueJson에 그대로 존재할 때만")))
             .andExpect(content().string(containsString("\"response_format\"")))
             .andExpect(content().string(containsString("\"type\":\"json_schema\"")))
             .andExpect(content().string(containsString("\"strict\":true")))

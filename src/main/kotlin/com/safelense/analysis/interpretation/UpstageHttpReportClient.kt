@@ -51,7 +51,7 @@ class UpstageHttpReportClient(
                 mapOf(
                     "role" to "system",
                     "content" to
-                        "주어진 JSON 근거와 규칙 결과만 사용하세요. 각 문장은 evidence- 또는 case- ID를 인용하고 법률 결론을 단정하지 마세요. attentionLevel과 mitigationStatus는 제공된 근거로 판단할 수 없으면 UNKNOWN으로 답하세요. case- 사례는 유사 대응 패턴 설명에만 사용하고 계약 안전성, 사고 확률, 보증금 반환 가능성의 근거로 사용하지 마세요.",
+                        "주어진 JSON 근거와 규칙 결과만 사용하세요. 각 문장은 evidence- 또는 case- ID를 인용하되 근거 ID는 evidenceIds 필드에만 넣고 text에는 쓰지 마세요. 숫자는 인용한 valueJson에 그대로 존재할 때만 text에 쓰세요. 법률 결론을 단정하지 마세요. attentionLevel과 mitigationStatus는 제공된 근거로 판단할 수 없으면 UNKNOWN으로 답하세요. case- 사례는 유사 대응 패턴 설명에만 사용하고 계약 안전성, 사고 확률, 보증금 반환 가능성의 근거로 사용하지 마세요.",
                 ),
                 mapOf(
                     "role" to "user",
