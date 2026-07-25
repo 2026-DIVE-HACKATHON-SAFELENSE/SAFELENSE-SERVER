@@ -97,6 +97,18 @@ class LivePropertyDataCollectorTests {
     }
 
     @Test
+    fun `uses the previous year when the current official price is not published`() {
+        `when`(resolver.resolve(PROPERTY.address)).thenReturn(address())
+        `when`(priceClient.fetch(address(), 2026)).thenReturn(null)
+        `when`(priceClient.fetch(address(), 2025)).thenReturn(OfficialPriceSnapshot(48000, 2025, 1))
+
+        val result = collector.collect(PROPERTY)
+
+        assertThat(result.first { it.evidenceKey == "OFFICIAL_PRICE" }.valueJson)
+            .contains(""""amount":48000""", """"standardYear":2025""")
+    }
+
+    @Test
     fun `does not call providers when address resolution fails`() {
         `when`(resolver.resolve(PROPERTY.address)).thenReturn(null)
 

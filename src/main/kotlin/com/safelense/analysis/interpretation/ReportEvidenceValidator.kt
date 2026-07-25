@@ -41,6 +41,12 @@ class ReportEvidenceValidator {
             if (LEGAL_JUDGMENT_TERMS.any(statement.text::contains)) {
                 throw InvalidAiEvidenceException()
             }
+            if (
+                statement.evidenceIds.any { it.startsWith("case-") } &&
+                CASE_CONCLUSION_TERMS.any(statement.text::contains)
+            ) {
+                throw InvalidAiEvidenceException()
+            }
             val citedValues = statement.evidenceIds
                 .mapNotNull(evidenceValues::get)
                 .joinToString(" ")
@@ -55,5 +61,13 @@ class ReportEvidenceValidator {
     companion object {
         private val NUMBER = Regex("""\d+(?:[.,]\d+)?""")
         private val LEGAL_JUDGMENT_TERMS = listOf("법적으로 안전", "법적으로 보장", "불법이 확실", "위법이 확실")
+        private val CASE_CONCLUSION_TERMS = listOf(
+            "사고 확률",
+            "계약이 안전",
+            "계약은 안전",
+            "계약이 위험",
+            "계약은 위험",
+            "반환이 보장",
+        )
     }
 }

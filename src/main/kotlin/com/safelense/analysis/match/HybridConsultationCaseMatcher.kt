@@ -38,7 +38,7 @@ class HybridConsultationCaseMatcher(
             )
             .take(100)
         if (candidates.isEmpty()) {
-            return ConsultationMatchResult(emptyList(), degraded = false)
+            return ConsultationMatchResult(emptyList(), degraded = true)
         }
         val queryVector = try {
             embeddingClient.embed(listOf(request.embeddingInput())).single()
@@ -66,7 +66,7 @@ class HybridConsultationCaseMatcher(
                 semanticScore = semantic,
                 combinedScore = semantic?.let {
                     combineConsultationScores(candidate.structuredScore, it)
-                } ?: candidate.structuredScore * 0.55,
+                } ?: candidate.structuredScore,
             )
         }.filter { it.combinedScore >= MINIMUM_SCORE }
             .sortedWith(compareByDescending<MatchedCase>(MatchedCase::combinedScore).thenBy(MatchedCase::caseId))
@@ -143,6 +143,7 @@ class HybridConsultationCaseMatcher(
         combinedScore = combinedScore,
         pattern = "${case.disputeType} · ${case.progressStage}",
         summary = "${case.housingType} 계약의 ${case.disputeType} 분쟁이 ${case.progressStage} 단계로 진행된 유사 사례입니다.",
+        source = case.source,
     )
 
     private data class StructuredCandidate(

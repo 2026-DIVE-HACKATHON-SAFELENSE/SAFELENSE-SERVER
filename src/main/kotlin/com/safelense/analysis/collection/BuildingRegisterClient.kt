@@ -50,8 +50,11 @@ class BuildingRegisterHttpClient(
             throw IllegalStateException("Building register provider rejected the request")
         }
         val itemNode = response.get("body")?.get("items")?.get("item") ?: return null
-        val item = if (itemNode.isArray) itemNode.values().firstOrNull() else itemNode
-        return item?.let {
+        val items = if (itemNode.isArray) itemNode.values().toList() else listOf(itemNode)
+        if (items.size != 1) {
+            return null
+        }
+        return items.single().let {
             BuildingRegisterSnapshot(
                 mainPurpose = it.text("mainPurpsCdNm"),
                 approvalDate = it.text("useAprDay")?.let(::parseDate),

@@ -18,10 +18,11 @@ class ConsultationCaseImportRunner(
     override fun run(args: ApplicationArguments) {
         val result = service.import(Path.of(file))
         logger.info(
-            "Consultation import completed. read={}, upserted={}, failed={}",
+            "Consultation import completed. read={}, upserted={}, failed={}, failedRows={}",
             result.read,
             result.upserted,
             result.failed,
+            result.failedRows,
         )
     }
 

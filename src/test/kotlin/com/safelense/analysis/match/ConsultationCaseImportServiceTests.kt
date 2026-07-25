@@ -1,7 +1,11 @@
 // 비식별 상담 XLSX의 헤더 검증과 임베딩 멱등 적재를 검증하는 테스트
 package com.safelense.analysis.match
 
+import com.safelense.analysis.interpretation.OpenAiProperties
 import java.nio.file.Path
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -19,7 +23,13 @@ class ConsultationCaseImportServiceTests {
     private val repository = mock(ConsultationCaseRepository::class.java)
     private val embeddingClient = RecordingEmbeddingClient()
     private val saved = mutableListOf<ConsultationCase>()
-    private val service = ConsultationCaseImportService(repository, embeddingClient, ObjectMapper())
+    private val service = ConsultationCaseImportService(
+        repository,
+        embeddingClient,
+        ObjectMapper(),
+        OpenAiProperties(apiKey = "test-key"),
+        Clock.fixed(Instant.parse("2026-07-26T00:00:00Z"), ZoneOffset.UTC),
+    )
 
     @Test
     fun `imports the named sheet and preserves nullable text`() {
@@ -36,12 +46,39 @@ class ConsultationCaseImportServiceTests {
         val result = service.import(path)
 
         assertThat(result).isEqualTo(ConsultationImportResult(read = 1, upserted = 1, failed = 0))
+        assertThat(saved.single().externalCaseId).isEqualTo("DIVE-2026-1")
         assertThat(saved.single().source).isEqualTo("DIVE_2026_COUNSELING")
         assertThat(saved.single().datasetVersion).isEqualTo("2026-v1")
+        assertThat(saved.single().attorneyCode).isEqualTo("비식별 변호사")
         assertThat(saved.single().counselorOpinion).isNull()
         assertThat(saved.single().specialNotes).isNull()
         assertThat(saved.single().embeddingJson).isEqualTo("[0.1,0.2]")
+        assertThat(saved.single().embeddingModel).isEqualTo("text-embedding-3-small")
+        assertThat(saved.single().embeddingCreatedAt).isEqualTo(Instant.parse("2026-07-26T00:00:00Z"))
         assertThat(embeddingClient.inputs.single()).doesNotContain("비식별 변호사")
+    }
+
+    @Test
+    fun `stores an empty summary case without requesting an embedding`() {
+        val path = workbook(
+            EXPECTED_HEADERS,
+            listOf(
+                "2", "임차in", "2026-01", "서울특별시", "중구", "1억~2억",
+                "계약전", "아파트", "근저당", "미가입", "보증금", "상담",
+                "", "의견", "특이사항", "비식별 변호사",
+            ),
+        )
+        `when`(repository.findBySourceAndExternalCaseId("DIVE_2026_COUNSELING", "DIVE-2026-2"))
+            .thenReturn(null)
+        captureSaves()
+
+        val result = service.import(path)
+
+        assertThat(result).isEqualTo(ConsultationImportResult(read = 1, upserted = 1, failed = 0))
+        assertThat(embeddingClient.inputs).isEmpty()
+        assertThat(saved.single().embeddingJson).isNull()
+        assertThat(saved.single().embeddingModel).isNull()
+        assertThat(saved.single().embeddingCreatedAt).isNull()
     }
 
     @Test
@@ -55,7 +92,7 @@ class ConsultationCaseImportServiceTests {
             ),
         )
         val existing = case(externalCaseId = "1", depositBand = "기존")
-        `when`(repository.findBySourceAndExternalCaseId("DIVE_2026_COUNSELING", "1"))
+        `when`(repository.findBySourceAndExternalCaseId("DIVE_2026_COUNSELING", "DIVE-2026-1"))
             .thenReturn(existing)
         captureSaves()
 
@@ -79,13 +116,13 @@ class ConsultationCaseImportServiceTests {
     }
 
     private fun prepareRepository() {
-        `when`(repository.findBySourceAndExternalCaseId("DIVE_2026_COUNSELING", "1"))
+        `when`(repository.findBySourceAndExternalCaseId("DIVE_2026_COUNSELING", "DIVE-2026-1"))
             .thenReturn(null)
         captureSaves()
     }
 
     private fun captureSaves() {
-        `when`(repository.saveAll(anyList<ConsultationCase>())).thenAnswer {
+        `when`(repository.saveAllAndFlush(anyList<ConsultationCase>())).thenAnswer {
             @Suppress("UNCHECKED_CAST")
             val cases = it.arguments[0] as List<ConsultationCase>
             saved += cases
@@ -108,7 +145,7 @@ class ConsultationCaseImportServiceTests {
 
     private fun case(externalCaseId: String, depositBand: String) =
         ConsultationCase(
-            externalCaseId = externalCaseId,
+            externalCaseId = "DIVE-2026-$externalCaseId",
             source = "DIVE_2026_COUNSELING",
             datasetVersion = "2026-v1",
             sourceGroup = "임차in",
@@ -122,6 +159,7 @@ class ConsultationCaseImportServiceTests {
             guaranteeStatus = "미가입",
             disputeType = "보증금",
             progressStage = "상담",
+            attorneyCode = "비식별 변호사",
         )
 
     companion object {

@@ -63,14 +63,41 @@ class MolitRentMarketClientTests {
         server.verify()
     }
 
-    private fun rentResponse(first: String, second: String) = """
+    @Test
+    fun `reads every result page before calculating the rent market`() {
+        val builder = RestClient.builder()
+        val server = MockRestServiceServer.bindTo(builder).build()
+        val client = MolitRentMarketHttpClient(
+            builder,
+            PublicDataProperties(
+                "public-key",
+                apartmentRentBaseUrl = "https://public.test/apartment",
+            ),
+        )
+        server.expect(requestTo(org.hamcrest.Matchers.containsString("pageNo=1")))
+            .andRespond(withSuccess(rentResponse("10,000", "20,000", 1001), XML_UTF8))
+        server.expect(requestTo(org.hamcrest.Matchers.containsString("pageNo=2")))
+            .andRespond(withSuccess(rentResponse("30,000", "40,000", 1001), XML_UTF8))
+
+        val result = client.fetch(
+            address(),
+            BuildingType.APARTMENT,
+            listOf(YearMonth.parse("2026-07")),
+        )
+
+        assertThat(result?.sampleCount).isEqualTo(4)
+        assertThat(result?.medianDepositManwon).isEqualTo(25000)
+        server.verify()
+    }
+
+    private fun rentResponse(first: String, second: String, totalCount: Int = 3) = """
         <response>
           <header><resultCode>000</resultCode><resultMsg>OK</resultMsg></header>
           <body><items>
             <item><umdNm>태평로1가</umdNm><deposit>$first</deposit></item>
             <item><umdNm>태평로1가</umdNm><deposit>$second</deposit></item>
             <item><umdNm>다른동</umdNm><deposit>99,000</deposit></item>
-          </items></body>
+          </items><totalCount>$totalCount</totalCount></body>
         </response>
     """.trimIndent()
 

@@ -26,6 +26,8 @@ class AnalysisCaseMatch(
     val semanticScore: Double?,
     @Column(name = "combined_score", nullable = false)
     val combinedScore: Double,
+    @Column(nullable = false, length = 64)
+    val source: String,
     @Column(nullable = false, length = 255)
     val pattern: String,
     @Column(nullable = false, columnDefinition = "TEXT")

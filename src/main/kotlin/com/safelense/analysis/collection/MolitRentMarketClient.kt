@@ -78,23 +78,43 @@ class MolitRentMarketHttpClient(
         address: ResolvedPropertyAddress,
         month: YearMonth,
     ): List<Long> {
+        val deposits = mutableListOf<Long>()
+        var page = 1
+        do {
+            val result = fetchPage(endpoint, address, month, page)
+            deposits += result.deposits
+            page += 1
+        } while ((page - 1) * PAGE_SIZE < result.totalCount)
+        return deposits
+    }
+
+    private fun fetchPage(
+        endpoint: Pair<String, String>,
+        address: ResolvedPropertyAddress,
+        month: YearMonth,
+        page: Int,
+    ): RentPage {
         val uri = UriComponentsBuilder.fromUriString("${endpoint.first}/${endpoint.second}")
             .queryParam("serviceKey", properties.serviceKey)
             .queryParam("LAWD_CD", address.sigunguCode)
             .queryParam("DEAL_YMD", month.toString().replace("-", ""))
-            .queryParam("numOfRows", 1000)
-            .queryParam("pageNo", 1)
+            .queryParam("numOfRows", PAGE_SIZE)
+            .queryParam("pageNo", page)
             .build()
             .encode()
             .toUri()
-        val xml = restClient.get().uri(uri).retrieve().body(String::class.java) ?: return emptyList()
+        val xml = restClient.get().uri(uri).retrieve().body(String::class.java)
+            ?: throw IllegalStateException("Rent market response is empty")
         val document = SafeXml.parse(xml)
         val resultCode = document.getElementsByTagName("resultCode").item(0)?.textContent?.trim()
         if (resultCode !in setOf("00", "000", "0000")) {
             throw IllegalStateException("Rent market provider rejected the request")
         }
+        val totalCount = document.getElementsByTagName("totalCount").item(0)
+            ?.textContent?.trim()?.toIntOrNull()
+            ?: throw IllegalStateException("Rent market count is invalid")
         val items = document.getElementsByTagName("item")
-        return (0 until items.length).mapNotNull { index ->
+        val deposits = (0 until items.length).mapNotNull { index ->
             val item = items.item(index) as? Element ?: return@mapNotNull null
             val legalDong = item.childText("umdNm", "법정동")
             if (legalDong != address.legalDong) {
@@ -105,10 +125,20 @@ class MolitRentMarketHttpClient(
                 ?.trim()
                 ?.toLongOrNull()
         }
+        return RentPage(totalCount, deposits)
     }
 
     private fun Element.childText(vararg names: String): String? =
         names.firstNotNullOfOrNull { name ->
             getElementsByTagName(name).item(0)?.textContent?.trim()?.takeIf(String::isNotEmpty)
         }
+
+    private data class RentPage(
+        val totalCount: Int,
+        val deposits: List<Long>,
+    )
+
+    companion object {
+        private const val PAGE_SIZE = 1000
+    }
 }

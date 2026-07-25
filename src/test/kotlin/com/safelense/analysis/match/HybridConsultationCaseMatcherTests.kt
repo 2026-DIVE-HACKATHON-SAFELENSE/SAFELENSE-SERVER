@@ -64,6 +64,41 @@ class HybridConsultationCaseMatcherTests {
         assertThat(result.cases.single().combinedScore).isEqualTo(1.0)
     }
 
+    @Test
+    fun `uses the same structured fallback when a stored embedding is absent`() {
+        `when`(repository.findAll()).thenReturn(
+            listOf(case(1, "1억~2억", "아파트", "서울", null)),
+        )
+        val matcher = HybridConsultationCaseMatcher(
+            repository,
+            EmbeddingClient { listOf(listOf(1.0, 0.0)) },
+            ConsultationStructuredScorer(),
+            objectMapper,
+        )
+
+        val result = matcher.match(request())
+
+        assertThat(result.degraded).isTrue()
+        assertThat(result.cases.single().semanticScore).isNull()
+        assertThat(result.cases.single().combinedScore).isEqualTo(1.0)
+    }
+
+    @Test
+    fun `marks search degraded when consultation data was not imported`() {
+        `when`(repository.findAll()).thenReturn(emptyList())
+        val matcher = HybridConsultationCaseMatcher(
+            repository,
+            EmbeddingClient { error("must not call embeddings") },
+            ConsultationStructuredScorer(),
+            objectMapper,
+        )
+
+        val result = matcher.match(request())
+
+        assertThat(result.cases).isEmpty()
+        assertThat(result.degraded).isTrue()
+    }
+
     private fun request() =
         ConsultationMatchRequest(
             property = HomeProperty(
@@ -101,7 +136,7 @@ class HybridConsultationCaseMatcherTests {
         depositBand: String,
         housingType: String,
         province: String,
-        embeddingJson: String,
+        embeddingJson: String?,
     ) = ConsultationCase(
         id = id,
         externalCaseId = id.toString(),
@@ -118,6 +153,7 @@ class HybridConsultationCaseMatcherTests {
         guaranteeStatus = "미상",
         disputeType = "보증금반환",
         progressStage = "상담",
+        attorneyCode = "비식별 변호사",
         situationSummary = "개별 상담 원문",
         embeddingJson = embeddingJson,
     )

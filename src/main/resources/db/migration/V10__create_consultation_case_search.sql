@@ -18,7 +18,10 @@ CREATE TABLE consultation_cases (
     situation_summary TEXT NULL,
     counselor_opinion TEXT NULL,
     special_notes TEXT NULL,
+    attorney_code VARCHAR(100) NOT NULL,
     embedding_json TEXT NULL,
+    embedding_model VARCHAR(100) NULL,
+    embedding_created_at TIMESTAMP(6) WITH TIME ZONE NULL,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     CONSTRAINT uk_consultation_cases_source_external UNIQUE (source, external_case_id)
@@ -35,6 +38,7 @@ CREATE TABLE analysis_case_matches (
     structured_score DOUBLE PRECISION NOT NULL,
     semantic_score DOUBLE PRECISION NULL,
     combined_score DOUBLE PRECISION NOT NULL,
+    source VARCHAR(64) NOT NULL,
     pattern VARCHAR(255) NOT NULL,
     summary TEXT NOT NULL,
     created_at TIMESTAMP(6) WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP(6),

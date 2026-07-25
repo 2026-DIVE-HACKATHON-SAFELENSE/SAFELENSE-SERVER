@@ -9,6 +9,7 @@ data class MatchedCase(
     val combinedScore: Double,
     val pattern: String,
     val summary: String,
+    val source: String = CONSULTATION_SOURCE,
 ) {
     constructor(
         caseId: String,
@@ -23,6 +24,7 @@ data class MatchedCase(
         combinedScore = similarity,
         pattern = pattern,
         summary = summary,
+        source = CONSULTATION_SOURCE,
     )
 
     val similarity: Double

@@ -43,7 +43,7 @@ class OpenAiHttpReportClient(
             "model" to properties.model,
             "store" to false,
             "instructions" to
-                "주어진 JSON 근거와 규칙 결과만 사용하세요. 각 문장은 evidence- 또는 case- ID를 인용하고 법률 결론을 단정하지 마세요.",
+                "주어진 JSON 근거와 규칙 결과만 사용하세요. 각 문장은 evidence- 또는 case- ID를 인용하고 법률 결론을 단정하지 마세요. case- 사례는 유사 대응 패턴 설명에만 사용하고 계약 안전성, 사고 확률, 보증금 반환 가능성의 근거로 사용하지 마세요.",
             "input" to objectMapper.writeValueAsString(request),
             "max_output_tokens" to 1200,
             "text" to mapOf(

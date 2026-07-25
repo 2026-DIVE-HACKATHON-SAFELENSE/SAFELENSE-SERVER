@@ -69,7 +69,7 @@ class LivePropertyDataCollector(
         collectedAt: Instant,
     ): CollectedEvidenceCommand = try {
         val year = LocalDate.now(clock).year
-        val snapshot = priceClient.fetch(address, year)
+        val snapshot = priceClient.fetch(address, year) ?: priceClient.fetch(address, year - 1)
             ?: return missing(
                 "OFFICIAL_PRICE",
                 "VWORLD_OFFICIAL_PRICE",

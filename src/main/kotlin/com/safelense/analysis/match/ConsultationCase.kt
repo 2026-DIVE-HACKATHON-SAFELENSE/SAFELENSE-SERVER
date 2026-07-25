@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.Instant
 
 @Entity
 @Table(name = "consultation_cases")
@@ -48,6 +49,12 @@ class ConsultationCase(
     var counselorOpinion: String? = null,
     @Column(name = "special_notes", columnDefinition = "TEXT")
     var specialNotes: String? = null,
+    @Column(name = "attorney_code", nullable = false, length = 100)
+    var attorneyCode: String = "미상",
     @Column(name = "embedding_json", columnDefinition = "TEXT")
     var embeddingJson: String? = null,
+    @Column(name = "embedding_model", length = 100)
+    var embeddingModel: String? = null,
+    @Column(name = "embedding_created_at")
+    var embeddingCreatedAt: Instant? = null,
 )

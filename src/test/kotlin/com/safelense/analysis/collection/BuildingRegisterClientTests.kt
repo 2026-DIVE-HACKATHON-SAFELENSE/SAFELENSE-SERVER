@@ -42,6 +42,36 @@ class BuildingRegisterClientTests {
         server.verify()
     }
 
+    @Test
+    fun `does not choose the first title when multiple buildings remain`() {
+        val builder = RestClient.builder()
+        val server = MockRestServiceServer.bindTo(builder).build()
+        val client = BuildingRegisterHttpClient(
+            builder,
+            PublicDataProperties("public-key", buildingBaseUrl = "https://public.test/building"),
+        )
+        server.expect(requestTo(org.hamcrest.Matchers.any(String::class.java)))
+            .andRespond(
+                withSuccess(
+                    """
+                        {
+                          "response": {
+                            "header": {"resultCode": "00"},
+                            "body": {"items": {"item": [
+                              {"mainPurpsCdNm": "업무시설"},
+                              {"mainPurpsCdNm": "공동주택"}
+                            ]}}
+                          }
+                        }
+                    """.trimIndent(),
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
+
+        assertThat(client.fetch(address())).isNull()
+        server.verify()
+    }
+
     companion object {
         private val BUILDING_RESPONSE = """
             {

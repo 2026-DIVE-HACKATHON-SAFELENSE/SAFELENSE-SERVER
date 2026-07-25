@@ -1,13 +1,15 @@
 // 비식별 상담 XLSX를 검증하고 임베딩과 함께 멱등 적재하는 서비스
 package com.safelense.analysis.match
 
+import com.safelense.analysis.interpretation.OpenAiProperties
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Clock
+import java.time.Instant
 import org.apache.poi.ss.usermodel.DataFormatter
 import org.apache.poi.ss.usermodel.Row
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import tools.jackson.databind.ObjectMapper
 
 const val CONSULTATION_SOURCE = "DIVE_2026_COUNSELING"
@@ -19,6 +21,7 @@ data class ConsultationImportResult(
     val read: Int,
     val upserted: Int,
     val failed: Int,
+    val failedRows: List<Int> = emptyList(),
 )
 
 @Service
@@ -26,35 +29,63 @@ class ConsultationCaseImportService(
     private val repository: ConsultationCaseRepository,
     private val embeddingClient: EmbeddingClient,
     private val objectMapper: ObjectMapper,
+    private val openAiProperties: OpenAiProperties,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
-    @Transactional
     fun import(path: Path): ConsultationImportResult {
         if (!Files.isRegularFile(path)) {
             throw InvalidConsultationWorkbookException()
         }
         val rows = readRows(path)
         var upserted = 0
-        var failed = rows.failed
+        val failedRows = rows.failedRows.toMutableList()
         rows.valid.chunked(100).forEach { batch ->
+            val (semanticRows, structuredOnlyRows) = batch.partition { it.situationSummary != null }
+            val structuredSaved = saveRows(structuredOnlyRows, List(structuredOnlyRows.size) { null })
+            upserted += structuredSaved
+            if (structuredSaved == 0) {
+                failedRows += structuredOnlyRows.map(ImportRow::rowNumber)
+            }
             try {
-                val embeddings = embeddingClient.embed(batch.map(ImportRow::embeddingInput))
-                if (embeddings.size != batch.size) {
+                val embeddings = embeddingClient.embed(semanticRows.map(ImportRow::embeddingInput))
+                if (embeddings.size != semanticRows.size) {
                     throw EmbeddingUnavailableException()
                 }
-                val cases = batch.zip(embeddings).map { (row, embedding) ->
-                    row.toEntity(objectMapper.writeValueAsString(embedding))
+                val semanticSaved = saveRows(semanticRows, embeddings)
+                upserted += semanticSaved
+                if (semanticSaved == 0) {
+                    failedRows += semanticRows.map(ImportRow::rowNumber)
                 }
-                repository.saveAll(cases)
-                upserted += cases.size
             } catch (_: Exception) {
-                failed += batch.size
+                failedRows += semanticRows.map(ImportRow::rowNumber)
             }
         }
         return ConsultationImportResult(
-            read = rows.valid.size + rows.failed,
+            read = rows.valid.size + rows.failedRows.size,
             upserted = upserted,
-            failed = failed,
+            failed = failedRows.size,
+            failedRows = failedRows.sorted(),
         )
+    }
+
+    private fun saveRows(rows: List<ImportRow>, embeddings: List<List<Double>?>): Int {
+        if (rows.isEmpty()) {
+            return 0
+        }
+        return try {
+            val embeddedAt = Instant.now(clock)
+            val cases = rows.zip(embeddings).map { (row, embedding) ->
+                row.toEntity(
+                    embeddingJson = embedding?.let(objectMapper::writeValueAsString),
+                    embeddingModel = embedding?.let { openAiProperties.embeddingModel },
+                    embeddingCreatedAt = embedding?.let { embeddedAt },
+                )
+            }
+            repository.saveAllAndFlush(cases)
+            cases.size
+        } catch (_: Exception) {
+            0
+        }
     }
 
     private fun readRows(path: Path): ImportRows =
@@ -63,7 +94,7 @@ class ConsultationCaseImportService(
                 val sheet = workbook.getSheet(SHEET_NAME) ?: throw InvalidConsultationWorkbookException()
                 validateHeaders(sheet.getRow(0) ?: throw InvalidConsultationWorkbookException())
                 val valid = mutableListOf<ImportRow>()
-                var failed = 0
+                val failedRows = mutableListOf<Int>()
                 (1..sheet.lastRowNum).forEach { index ->
                     val values = sheet.getRow(index)?.values().orEmpty()
                     if (values.all(String::isBlank)) {
@@ -71,12 +102,12 @@ class ConsultationCaseImportService(
                     }
                     val row = ImportRow.from(values)
                     if (row == null) {
-                        failed += 1
+                        failedRows += index + 1
                     } else {
-                        valid += row
+                        valid += row.copy(rowNumber = index + 1)
                     }
                 }
-                ImportRows(valid, failed)
+                ImportRows(valid, failedRows)
             }
         }
 
@@ -91,7 +122,11 @@ class ConsultationCaseImportService(
             FORMATTER.formatCellValue(getCell(index)).trim()
         }
 
-    private fun ImportRow.toEntity(embeddingJson: String): ConsultationCase {
+    private fun ImportRow.toEntity(
+        embeddingJson: String?,
+        embeddingModel: String?,
+        embeddingCreatedAt: Instant?,
+    ): ConsultationCase {
         val entity = repository.findBySourceAndExternalCaseId(CONSULTATION_SOURCE, externalCaseId)
             ?: ConsultationCase(
                 externalCaseId = externalCaseId,
@@ -108,6 +143,7 @@ class ConsultationCaseImportService(
                 guaranteeStatus = guaranteeStatus,
                 disputeType = disputeType,
                 progressStage = progressStage,
+                attorneyCode = attorneyCode,
             )
         entity.datasetVersion = CONSULTATION_DATASET_VERSION
         entity.sourceGroup = sourceGroup
@@ -124,16 +160,20 @@ class ConsultationCaseImportService(
         entity.situationSummary = situationSummary
         entity.counselorOpinion = counselorOpinion
         entity.specialNotes = specialNotes
+        entity.attorneyCode = attorneyCode
         entity.embeddingJson = embeddingJson
+        entity.embeddingModel = embeddingModel
+        entity.embeddingCreatedAt = embeddingCreatedAt
         return entity
     }
 
     private data class ImportRows(
         val valid: List<ImportRow>,
-        val failed: Int,
+        val failedRows: List<Int>,
     )
 
     private data class ImportRow(
+        val rowNumber: Int = 0,
         val externalCaseId: String,
         val sourceGroup: String,
         val consultationMonth: String,
@@ -149,6 +189,7 @@ class ConsultationCaseImportService(
         val situationSummary: String?,
         val counselorOpinion: String?,
         val specialNotes: String?,
+        val attorneyCode: String,
     ) {
         fun embeddingInput(): String =
             listOfNotNull(
@@ -172,7 +213,7 @@ class ConsultationCaseImportService(
                     return null
                 }
                 return ImportRow(
-                    externalCaseId = values[0],
+                    externalCaseId = "DIVE-2026-${values[0]}",
                     sourceGroup = values[1],
                     consultationMonth = values[2],
                     province = values[3],
@@ -187,6 +228,7 @@ class ConsultationCaseImportService(
                     situationSummary = values[12].ifBlank { null },
                     counselorOpinion = values[13].ifBlank { null },
                     specialNotes = values[14].ifBlank { null },
+                    attorneyCode = values[15],
                 )
             }
         }

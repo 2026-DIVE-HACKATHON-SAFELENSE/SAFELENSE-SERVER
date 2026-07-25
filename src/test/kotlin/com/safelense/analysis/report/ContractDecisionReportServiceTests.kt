@@ -12,6 +12,7 @@ import com.safelense.analysis.interpretation.OpenAiReportClient
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
 import com.safelense.analysis.interpretation.OpenAiReportRequest
 import com.safelense.analysis.interpretation.ReportEvidenceValidator
+import com.safelense.analysis.match.CONSULTATION_SOURCE
 import com.safelense.analysis.match.MatchedCase
 import com.safelense.analysis.run.AnalysisDataMode
 import com.safelense.analysis.run.AnalysisRun
@@ -104,6 +105,7 @@ class ContractDecisionReportServiceTests {
             SimilarCaseReport(
                 caseId = "101",
                 similarity = 0.845,
+                source = CONSULTATION_SOURCE,
                 pattern = "보증금반환 · 상담",
                 summary = "아파트 보증금반환 유사 사례입니다.",
             ),

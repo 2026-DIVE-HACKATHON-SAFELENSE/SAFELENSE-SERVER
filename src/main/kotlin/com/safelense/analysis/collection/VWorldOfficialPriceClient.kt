@@ -35,16 +35,25 @@ class VWorldOfficialPriceClient(
             .encode()
             .toUri()
         val root = restClient.get().uri(uri).retrieve().body(JsonNode::class.java) ?: return null
-        val prices = root.get("apartHousingPrices") ?: return null
-        val total = prices.get("totalCount")?.asString()?.toIntOrNull() ?: return null
+        val prices = root.get("apartHousingPrices")
+            ?: throw IllegalStateException("Official price response is invalid")
+        val total = prices.get("totalCount")?.asString()?.toIntOrNull()
+            ?: throw IllegalStateException("Official price count is invalid")
+        if (total == 0) {
+            return null
+        }
         val fields = prices.get("field")?.let { node ->
             if (node.isArray) node.values().toList() else listOf(node)
         }.orEmpty()
-        if (total != 1 || fields.size != 1) {
+        if (total > 1) {
             return null
         }
+        if (fields.size != 1) {
+            throw IllegalStateException("Official price item is invalid")
+        }
         val field = fields.single()
-        val won = field.get("pblntfPc")?.asString()?.replace(",", "")?.toLongOrNull() ?: return null
+        val won = field.get("pblntfPc")?.asString()?.replace(",", "")?.toLongOrNull()
+            ?: throw IllegalStateException("Official price amount is invalid")
         val standardYear = field.get("stdrYear")?.asString()?.toIntOrNull() ?: year
         val standardMonth = field.get("stdrMt")?.asString()?.toIntOrNull()
         return OfficialPriceSnapshot(won / 10_000L, standardYear, standardMonth)

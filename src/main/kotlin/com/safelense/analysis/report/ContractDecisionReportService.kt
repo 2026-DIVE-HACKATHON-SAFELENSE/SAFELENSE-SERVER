@@ -61,6 +61,8 @@ data class SimilarCaseReport(
     var caseId: String = "",
     @field:Schema(description = "구조화 조건과 의미 검색의 결합 유사도", example = "0.845")
     var similarity: Double = 0.0,
+    @field:Schema(description = "상담 데이터 출처")
+    var source: String = "",
     @field:Schema(description = "일반화된 분쟁 유형과 진행 단계")
     var pattern: String = "",
     @field:Schema(description = "원문을 노출하지 않는 일반화 사례 설명")
@@ -144,6 +146,7 @@ class ContractDecisionReportService(
                 SimilarCaseReport(
                     caseId = it.caseId,
                     similarity = it.combinedScore,
+                    source = it.source,
                     pattern = it.pattern,
                     summary = it.summary,
                 )

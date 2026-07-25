@@ -108,6 +108,7 @@ class AnalysisRunWorker(
                         structuredScore = match.structuredScore,
                         semanticScore = match.semanticScore,
                         combinedScore = match.combinedScore,
+                        source = match.source,
                         pattern = match.pattern,
                         summary = match.summary,
                     )

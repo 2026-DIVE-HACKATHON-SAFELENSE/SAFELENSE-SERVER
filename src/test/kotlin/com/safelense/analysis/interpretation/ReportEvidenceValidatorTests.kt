@@ -33,6 +33,15 @@ class ReportEvidenceValidatorTests {
         }.isInstanceOf(InvalidAiEvidenceException::class.java)
     }
 
+    @Test
+    fun `rejects using a consultation case as accident probability evidence`() {
+        val result = result(EvidenceBackedStatement("사고 확률이 높습니다.", listOf("case-101")))
+
+        assertThatThrownBy {
+            validator.validate(result, mapOf("case-101" to "유사 대응 패턴"))
+        }.isInstanceOf(InvalidAiEvidenceException::class.java)
+    }
+
     private fun result(summary: EvidenceBackedStatement) =
         AiReportResult(
             summary = summary,
