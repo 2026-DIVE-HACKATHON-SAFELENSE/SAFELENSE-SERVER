@@ -24,7 +24,11 @@ class VWorldAddressResolver(
         val road = search(input, "road")
         val category = if (road.total == 0) "parcel" else "road"
         val selected = if (category == "parcel") search(input, category) else road
-        val item = selected.items.singleOrNull { it.matchesAddress(input, category) } ?: run {
+        val item = selected.items
+            .filter { it.matchesAddress(input, category) }
+            .distinctBy { it.get("id")?.asString() }
+            .singleOrNull()
+            ?: run {
             logger.warn(
                 "VWorld address resolution failed. roadTotal={}, selectedTotal={}",
                 road.total,
@@ -111,9 +115,16 @@ class VWorldAddressResolver(
     }
 
     private fun JsonNode.matchesAddress(input: String, category: String): Boolean {
-        val candidate = get("address")?.get(category)?.asString()?.trim() ?: return false
-        return candidate == input || candidate.substringAfter(' ') == input.substringAfter(' ')
+        val candidate = get("address")?.get(category)?.asString()?.normalizedAddress() ?: return false
+        val normalizedInput = input.normalizedAddress()
+        return candidate == normalizedInput ||
+            candidate.substringAfter(' ') == normalizedInput.substringAfter(' ')
     }
+
+    private fun String.normalizedAddress(): String =
+        trim()
+            .replace(TRAILING_DETAILS, "")
+            .replace(WHITESPACE, " ")
 
     private fun JsonNode.toResolvedAddress(): ResolvedPropertyAddress? {
         val pnu = get("id")?.asString()?.takeIf { it.length == 19 } ?: return null
@@ -159,5 +170,7 @@ class VWorldAddressResolver(
 
     companion object {
         private val logger = LoggerFactory.getLogger(VWorldAddressResolver::class.java)
+        private val TRAILING_DETAILS = Regex("""\s*\([^()]*\)\s*$""")
+        private val WHITESPACE = Regex("""\s+""")
     }
 }

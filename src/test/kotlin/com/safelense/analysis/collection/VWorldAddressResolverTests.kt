@@ -66,7 +66,7 @@ class VWorldAddressResolverTests {
     }
 
     @Test
-    fun `selects the exact road address from multiple search results`() {
+    fun `selects a deduplicated road address without trailing building details`() {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
         val resolver = VWorldAddressResolver(
@@ -76,7 +76,7 @@ class VWorldAddressResolverTests {
         server.expect(requestTo(org.hamcrest.Matchers.containsString("size=100")))
             .andRespond(withSuccess(MULTIPLE_ADDRESS_RESPONSE, MediaType.APPLICATION_JSON))
 
-        val result = resolver.resolve("서울 중구 세종대로 110")
+        val result = resolver.resolve("서울 중구 세종대로 110 (서울시청)")
 
         assertThat(result?.pnu).isEqualTo("1114010300100310000")
         server.verify()
@@ -161,7 +161,7 @@ class VWorldAddressResolverTests {
             {
               "response": {
                 "status": "OK",
-                "record": {"total": "2"},
+                "record": {"total": "3"},
                 "result": {
                   "items": [
                     {
@@ -176,7 +176,15 @@ class VWorldAddressResolverTests {
                       "id": "1114010300100310000",
                       "address": {
                         "parcel": "서울특별시 중구 태평로1가 31",
-                        "road": "서울특별시 중구 세종대로 110"
+                        "road": "서울특별시 중구 세종대로 110 (태평로1가, 서울시청)"
+                      },
+                      "point": {"x": "126.977829", "y": "37.566317"}
+                    },
+                    {
+                      "id": "1114010300100310000",
+                      "address": {
+                        "parcel": "서울특별시 중구 태평로1가 31",
+                        "road": "서울특별시 중구 세종대로 110 (태평로1가, 서울시청)"
                       },
                       "point": {"x": "126.977829", "y": "37.566317"}
                     }
