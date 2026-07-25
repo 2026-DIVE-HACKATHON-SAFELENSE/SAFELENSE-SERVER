@@ -12,6 +12,8 @@ import com.safelense.analysis.InvalidAnalysisChecklistException
 import com.safelense.analysis.InvalidAnalysisDocumentException
 import com.safelense.analysis.InvalidAnalysisResultRequestException
 import com.safelense.analysis.InvalidAnalysisStageException
+import com.safelense.analysis.run.AnalysisRunNotFoundException
+import com.safelense.analysis.run.InvalidAnalysisRunRequestException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
@@ -50,6 +52,14 @@ class ApiExceptionHandler {
     @ExceptionHandler(AnalysisResultNotFoundException::class)
     fun handleAnalysisResultNotFound(): ResponseEntity<ApiError> =
         error(HttpStatus.NOT_FOUND, "ANALYSIS_NOT_FOUND", "Analysis result was not found.")
+
+    @ExceptionHandler(AnalysisRunNotFoundException::class)
+    fun handleAnalysisRunNotFound(): ResponseEntity<ApiError> =
+        error(HttpStatus.NOT_FOUND, "ANALYSIS_NOT_FOUND", "Analysis was not found.")
+
+    @ExceptionHandler(InvalidAnalysisRunRequestException::class)
+    fun handleInvalidAnalysisRunRequest(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Request is invalid.")
 
     @ExceptionHandler(InvalidAnalysisExecutionRequestException::class)
     fun handleInvalidAnalysisExecutionRequest(): ResponseEntity<ApiError> =

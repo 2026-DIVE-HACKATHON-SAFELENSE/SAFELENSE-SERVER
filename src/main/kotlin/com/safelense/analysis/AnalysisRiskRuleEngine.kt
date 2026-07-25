@@ -1,9 +1,13 @@
 // 버전형 규칙으로 구조화된 임대차 위험 신호를 점수와 근거로 변환하는 엔진
 package com.safelense.analysis
 
+import com.safelense.analysis.collection.CollectedEvidenceCommand
+import com.safelense.analysis.evidence.EvidenceStatus
+import com.safelense.property.HomeProperty
 import java.math.BigDecimal
 import java.math.RoundingMode
 import org.springframework.stereotype.Component
+import tools.jackson.databind.ObjectMapper
 
 const val ANALYSIS_RULE_VERSION = "dive-2026-v1"
 
@@ -58,6 +62,30 @@ data class AnalysisRiskAssessment(
 
 @Component
 class AnalysisRiskRuleEngine {
+    fun assess(
+        property: HomeProperty,
+        evidence: List<CollectedEvidenceCommand>,
+        objectMapper: ObjectMapper,
+    ): AnalysisRiskAssessment {
+        val available = evidence.filter { it.status == EvidenceStatus.AVAILABLE }
+        val estimatedPropertyValue = listOf("TRANSACTION_PRICE", "OFFICIAL_PRICE")
+            .firstNotNullOfOrNull { key ->
+                available.firstOrNull { it.evidenceKey == key }
+                    ?.valueJson
+                    ?.let(objectMapper::readTree)
+                    ?.get("amount")
+                    ?.takeIf { it.isIntegralNumber }
+                    ?.asLong()
+            }
+        return assess(
+            AnalysisRiskInput(
+                stage = AnalysisStage.BEFORE_CONTRACT,
+                depositAmountManwon = property.depositAmount,
+                estimatedPropertyValueManwon = estimatedPropertyValue,
+            ),
+        )
+    }
+
     fun assess(input: AnalysisRiskInput): AnalysisRiskAssessment {
         val findings = mutableListOf<String>()
         val recommendations = linkedSetOf<String>()

@@ -6,5 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface RegistryDocumentRepository : JpaRepository<RegistryDocument, Long> {
     fun findByIdAndPropertyId(id: Long, propertyId: Long): RegistryDocument?
+    fun findFirstByPropertyIdAndDeletedAtIsNullOrderByIdDesc(propertyId: Long): RegistryDocument?
     fun findAllByExpiresAtLessThanEqualAndDeletedAtIsNull(expiresAt: Instant): List<RegistryDocument>
 }
