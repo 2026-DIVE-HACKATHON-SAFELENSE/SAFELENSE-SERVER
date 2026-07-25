@@ -11,13 +11,21 @@ import org.springframework.transaction.annotation.Transactional
 data class AnalysisResultSummary(
     @field:Schema(description = "분석 결과 ID", example = "10")
     val id: Long,
+    @field:Schema(description = "분석을 실행한 케이스 ID", example = "42")
     val caseId: Long,
+    @field:Schema(description = "분석 대상 주택 ID", example = "7")
     val propertyId: Long,
+    @field:Schema(description = "계약 단계", example = "BEFORE_CONTRACT")
     val stage: AnalysisStage,
+    @field:Schema(description = "위험 신호 점수. 근거가 부족하면 null", example = "72")
     val score: Int?,
+    @field:Schema(description = "위험 등급", example = "HIGH")
     val grade: AnalysisRiskGrade,
+    @field:Schema(description = "입력 근거 충족률. 0부터 100 사이", example = "80")
     val confidence: Int,
+    @field:Schema(description = "분석 결과 요약")
     val summary: String,
+    @field:Schema(description = "분석 완료 시각", example = "2026-07-26T09:00:00Z")
     val analyzedAt: Instant,
 )
 
@@ -37,7 +45,9 @@ data class AnalysisResultDetail(
     val id: Long,
     @field:Schema(description = "분석을 실행한 케이스 ID", example = "42")
     val caseId: Long,
+    @field:Schema(description = "분석 대상 주택 ID", example = "7")
     val propertyId: Long,
+    @field:Schema(description = "계약 단계", example = "BEFORE_CONTRACT")
     val stage: AnalysisStage,
     @field:Schema(description = "위험 점수. 근거가 부족하면 null")
     val score: Int?,
@@ -51,7 +61,9 @@ data class AnalysisResultDetail(
     val findings: List<String>,
     @field:Schema(description = "권고 행동 목록")
     val recommendations: List<String>,
+    @field:Schema(description = "분석 규칙 버전", example = "dive-2026-v1")
     val ruleVersion: String,
+    @field:Schema(description = "분석 완료 시각", example = "2026-07-26T09:00:00Z")
     val analyzedAt: Instant,
 )
 

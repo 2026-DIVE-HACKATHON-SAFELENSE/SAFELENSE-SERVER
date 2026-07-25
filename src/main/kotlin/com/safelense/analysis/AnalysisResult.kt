@@ -1,6 +1,7 @@
 // 저장된 위험 분석 결과와 리포트 원본을 표현하는 엔티티
 package com.safelense.analysis
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -11,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 
+@Schema(description = "위험 분석 등급")
 enum class AnalysisRiskGrade {
     UNKNOWN,
     LOW,

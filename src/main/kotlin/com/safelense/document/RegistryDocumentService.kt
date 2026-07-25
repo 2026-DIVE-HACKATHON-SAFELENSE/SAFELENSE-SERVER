@@ -3,6 +3,7 @@ package com.safelense.document
 
 import com.safelense.property.HomePropertyNotFoundException
 import com.safelense.property.HomePropertyRepository
+import io.swagger.v3.oas.annotations.media.Schema
 import java.security.MessageDigest
 import java.time.Clock
 import java.time.Instant
@@ -22,11 +23,17 @@ class RegistryDocumentNotFoundException : RuntimeException()
 
 class RegistryDocumentExpiredException : RuntimeException()
 
+@Schema(description = "등기부 원본 메타데이터")
 data class RegistryDocumentView(
+    @field:Schema(description = "등기 문서 ID", example = "7")
     val id: Long,
+    @field:Schema(description = "원본 MIME 타입", example = "application/pdf")
     val mimeType: String,
+    @field:Schema(description = "파일 크기. 단위는 바이트", example = "524288")
     val fileSize: Long,
+    @field:Schema(description = "문서 추출 상태", example = "PENDING")
     val extractionStatus: RegistryExtractionStatus,
+    @field:Schema(description = "원본 자동 만료 시각", example = "2026-08-25T09:00:00Z")
     val expiresAt: Instant,
 )
 

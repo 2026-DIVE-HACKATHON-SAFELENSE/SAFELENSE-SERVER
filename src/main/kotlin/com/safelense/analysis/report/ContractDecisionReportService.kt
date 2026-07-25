@@ -12,6 +12,7 @@ import com.safelense.analysis.run.AnalysisDataMode
 import com.safelense.analysis.run.AnalysisRun
 import com.safelense.analysis.run.AnalysisRunNotFoundException
 import com.safelense.analysis.run.AnalysisRunRepository
+import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Clock
 import java.time.Instant
 import org.springframework.stereotype.Service
@@ -20,33 +21,55 @@ import tools.jackson.databind.ObjectMapper
 
 const val ANALYSIS_PROMPT_VERSION = "contract-report-2026-v1"
 
+@Schema(description = "계약 안전성 분석")
 data class ContractSafetyReport(
+    @field:Schema(description = "위험 신호 점수. 근거가 부족하면 null", example = "72")
     var score: Int? = null,
+    @field:Schema(description = "위험 등급", example = "HIGH")
     var grade: AnalysisRiskGrade = AnalysisRiskGrade.UNKNOWN,
+    @field:Schema(description = "수집 근거 충족률. 0부터 100 사이", example = "80")
     var confidence: Int = 0,
+    @field:Schema(description = "규칙 기반 계약 안전성 요약")
     var summary: String = "",
+    @field:Schema(description = "수집 근거를 인용하는 주요 위험 신호")
     var findings: List<EvidenceBackedStatement> = emptyList(),
 )
 
+@Schema(description = "검증된 AI 종합 해석")
 data class AiInterpretationReport(
+    @field:Schema(description = "수집 근거를 인용하는 AI 종합 해석")
     var summary: EvidenceBackedStatement = EvidenceBackedStatement(),
+    @field:Schema(description = "AI 결과 대신 규칙 기반 문구를 사용했는지 여부", example = "false")
     var fallback: Boolean = false,
 )
 
+@Schema(description = "리포트 데이터 수집 범위")
 data class DataCoverageItem(
+    @field:Schema(description = "수집 근거 종류", example = "OFFICIAL_PRICE")
     var evidenceKey: String = "",
+    @field:Schema(description = "근거 가용성과 품질 상태", example = "AVAILABLE")
     var status: EvidenceStatus = EvidenceStatus.NOT_AVAILABLE,
+    @field:Schema(description = "데이터 출처", example = "SAFELENSE_DEMO")
     var source: String = "",
+    @field:Schema(description = "데이터 기준일. 기준일이 없으면 null", example = "2026-07-26T00:00:00Z")
     var asOf: String? = null,
 )
 
+@Schema(description = "근거 기반 계약 의사결정 리포트")
 data class ContractDecisionReportView(
+    @field:Schema(description = "계약 안전성 점수와 위험 신호")
     var contractSafety: ContractSafetyReport = ContractSafetyReport(),
+    @field:Schema(description = "거주 환경에 영향을 줄 수 있는 근거 기반 문장")
     var residentialImpacts: List<EvidenceBackedStatement> = emptyList(),
+    @field:Schema(description = "검증된 AI 종합 해석")
     var aiInterpretation: AiInterpretationReport = AiInterpretationReport(),
+    @field:Schema(description = "계약 전 확인할 행동 가이드")
     var actionGuide: List<EvidenceBackedStatement> = emptyList(),
+    @field:Schema(description = "근거별 수집 상태와 출처")
     var dataCoverage: List<DataCoverageItem> = emptyList(),
+    @field:Schema(description = "리포트에 사용된 데이터 모드", example = "DEMO")
     var dataMode: AnalysisDataMode = AnalysisDataMode.DEMO,
+    @field:Schema(description = "리포트 근거의 최신 기준 시각", example = "2026-07-26T09:00:00Z")
     var asOf: String = Instant.EPOCH.toString(),
 )
 

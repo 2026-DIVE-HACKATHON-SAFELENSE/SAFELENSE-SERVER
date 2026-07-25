@@ -1,6 +1,7 @@
 // 로그인 사용자의 현재 내 집 정보를 저장하는 JPA 엔티티
 package com.safelense.property
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -11,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDate
 
+@Schema(description = "주택 건물 유형")
 enum class BuildingType {
     MULTI_FAMILY,
     APARTMENT,

@@ -1,12 +1,16 @@
 // AI 문장의 근거 ID와 근거 없는 숫자·법률 단정을 검증하는 보호 장치
 package com.safelense.analysis.interpretation
 
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.stereotype.Component
 
 class InvalidAiEvidenceException : RuntimeException()
 
+@Schema(description = "수집 근거를 인용하는 리포트 문장")
 data class EvidenceBackedStatement(
+    @field:Schema(description = "사용자에게 표시할 해석 또는 행동 문장")
     var text: String = "",
+    @field:Schema(description = "문장을 뒷받침하는 수집 근거 ID 목록", example = "[\"evidence-101\"]")
     var evidenceIds: List<String> = emptyList(),
 )
 

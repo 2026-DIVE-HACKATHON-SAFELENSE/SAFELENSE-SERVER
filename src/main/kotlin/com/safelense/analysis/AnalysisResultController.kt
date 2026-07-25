@@ -4,7 +4,13 @@ package com.safelense.analysis
 import com.safelense.analysis.report.ContractDecisionReportService
 import com.safelense.analysis.report.ContractDecisionReportView
 import com.safelense.analysis.run.AnalysisRunNotFoundException
+import com.safelense.auth.presentation.ApiError
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -25,11 +31,33 @@ class AnalysisResultController(
     private val contractReportService: ContractDecisionReportService,
 ) {
     @Operation(summary = "분석 이력 조회", description = "커서 기반 페이지네이션으로 분석 결과 이력을 조회합니다.")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "분석 이력 조회 성공",
+                content = [Content(schema = Schema(implementation = AnalysisHistoryPage::class))],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "커서, 페이지 크기 또는 계약 단계가 올바르지 않음",
+                content = [Content(schema = Schema(implementation = ApiError::class))],
+            ),
+            ApiResponse(responseCode = "401", description = "인증 실패"),
+        ],
+    )
     @GetMapping
     fun list(
         authentication: Authentication,
+        @Parameter(description = "다음 페이지 조회용 분석 결과 ID 커서", example = "100")
         @RequestParam(required = false) cursor: String?,
+        @Parameter(description = "페이지 크기. 1부터 100까지", example = "20")
         @RequestParam(defaultValue = "20") size: String,
+        @Parameter(
+            description = "계약 단계 필터",
+            example = "BEFORE_CONTRACT",
+            schema = Schema(allowableValues = ["BEFORE_CONTRACT", "DURING_CONTRACT", "AFTER_CONTRACT"]),
+        )
         @RequestParam(required = false) stage: String?,
     ): AnalysisHistoryPage =
         service.list(
@@ -45,10 +73,42 @@ class AnalysisResultController(
         summary = "분석 결과 상세 조회",
         description = "기존 결과를 기본 조회하며 새 계약 의사결정 리포트는 resultType=CONTRACT_DECISION으로 구분합니다.",
     )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "분석 결과 조회 성공",
+                content = [
+                    Content(
+                        schema = Schema(
+                            oneOf = [AnalysisResultDetail::class, ContractDecisionReportView::class],
+                        ),
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "분석 ID 또는 결과 형식이 올바르지 않음",
+                content = [Content(schema = Schema(implementation = ApiError::class))],
+            ),
+            ApiResponse(responseCode = "401", description = "인증 실패"),
+            ApiResponse(
+                responseCode = "404",
+                description = "분석 결과를 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ApiError::class))],
+            ),
+        ],
+    )
     @GetMapping("/{analysisId}")
     fun get(
         authentication: Authentication,
+        @Parameter(description = "분석 결과 또는 실행 ID", example = "100")
         @PathVariable analysisId: String,
+        @Parameter(
+            description = "결과 형식 구분. 생략하면 기존 결과와 계약 의사결정 리포트를 순서대로 조회합니다.",
+            example = "CONTRACT_DECISION",
+            schema = Schema(allowableValues = ["LEGACY", "CONTRACT_DECISION"]),
+        )
         @RequestParam(required = false) resultType: String?,
     ): Any =
         resolve(
@@ -61,10 +121,41 @@ class AnalysisResultController(
         summary = "분석 PDF 리포트 다운로드",
         description = "새 계약 의사결정 PDF는 resultType=CONTRACT_DECISION으로 구분합니다.",
     )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "PDF 리포트 생성 성공",
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_PDF_VALUE,
+                        schema = Schema(type = "string", format = "binary"),
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "분석 ID 또는 결과 형식이 올바르지 않음",
+                content = [Content(schema = Schema(implementation = ApiError::class))],
+            ),
+            ApiResponse(responseCode = "401", description = "인증 실패"),
+            ApiResponse(
+                responseCode = "404",
+                description = "분석 결과를 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ApiError::class))],
+            ),
+        ],
+    )
     @GetMapping("/{analysisId}/report.pdf")
     fun report(
         authentication: Authentication,
+        @Parameter(description = "분석 결과 또는 실행 ID", example = "100")
         @PathVariable analysisId: String,
+        @Parameter(
+            description = "결과 형식 구분. 생략하면 기존 결과와 계약 의사결정 리포트를 순서대로 조회합니다.",
+            example = "CONTRACT_DECISION",
+            schema = Schema(allowableValues = ["LEGACY", "CONTRACT_DECISION"]),
+        )
         @RequestParam(required = false) resultType: String?,
     ): ResponseEntity<ByteArray> {
         val id = analysisId.toLongOrNull() ?: invalidRequest()

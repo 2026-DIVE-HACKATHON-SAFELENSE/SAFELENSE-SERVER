@@ -49,7 +49,9 @@ data class HomePropertyResponse(
     val depositAmount: Long,
     @field:Schema(description = "주택 유형")
     val buildingType: BuildingType,
+    @field:Schema(description = "임대인 이름. 입력하지 않았으면 null")
     val landlordName: String?,
+    @field:Schema(description = "계약 예정일. 입력하지 않았으면 null")
     val plannedContractDate: LocalDate?,
 )
 

@@ -27,6 +27,7 @@ import com.safelense.property.HomePropertyAlreadyExistsException
 import com.safelense.property.HomePropertyNotFoundException
 import com.safelense.property.InvalidHomePropertyRequestException
 import com.safelense.user.UserNotFoundException
+import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -35,9 +36,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.multipart.MaxUploadSizeExceededException
 
+@Schema(description = "API 오류 응답")
 data class ApiError(
+    @field:Schema(description = "클라이언트 분기용 오류 코드", example = "PROPERTY_NOT_FOUND")
     val code: String,
+    @field:Schema(description = "오류 설명")
     val message: String,
+    @field:Schema(description = "같은 요청을 재시도할 수 있는지 여부", example = "false")
     val retryable: Boolean = false,
 )
 

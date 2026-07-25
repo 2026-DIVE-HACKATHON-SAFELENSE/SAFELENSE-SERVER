@@ -1,6 +1,7 @@
 // 분석 실행에서 수집한 정규화 근거와 데이터 품질 상태를 저장하는 엔티티
 package com.safelense.analysis.evidence
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -11,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 
+@Schema(description = "수집 근거의 가용성과 품질 상태")
 enum class EvidenceStatus {
     AVAILABLE,
     NOT_AVAILABLE,

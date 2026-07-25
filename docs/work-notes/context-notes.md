@@ -105,3 +105,5 @@
 - 2026-07-26. 운영 설정은 OpenAI 키·등기부 버킷·KMS 키를 SSM에서 추가 로드한다. 실행 이력은 `PARTIAL`·`FAILED` 재시도 가능 여부만 공개하고 내부 오류를 숨기며, 만료 작업은 S3 삭제 후 문서를 `EXPIRED`로 표시한다.
 - 2026-07-26. 코드 리뷰 수정 후 `./gradlew test --rerun-tasks`와 `./gradlew bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다. `bootJar`는 Gradle 사용자 캐시 잠금이 샌드박스에서 차단되어 권한 확장 환경에서 실행했다.
 - 2026-07-26. 기존 결과와 새 실행의 숫자 ID 충돌은 기존 결과 우선과 `resultType=CONTRACT_DECISION` 구분자로 해소한다. SSM `GetParameters`는 AWS 제한에 맞춰 최대 10개씩 조회한다.
+- 2026-07-26. 피벗 신규 API는 컨트롤러와 DTO에 직접 Swagger 어노테이션을 붙여 태그·동작·파라미터·모델·주요 HTTP 응답을 모두 문서화하고 계약 테스트로 누락을 막는다.
+- 2026-07-26. 후보 매물 4개, 등기 문서 2개, 분석 실행 3개, 분석 결과 3개 API에 전체 Swagger 계약을 추가했다. `./gradlew test bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다.

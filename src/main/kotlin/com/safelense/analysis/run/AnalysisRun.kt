@@ -1,6 +1,7 @@
 // 계약 전 의사결정 분석 실행의 상태와 감사 정보를 저장하는 엔티티
 package com.safelense.analysis.run
 
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -11,6 +12,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.Instant
 
+@Schema(description = "계약 전 분석 실행 단계")
 enum class AnalysisRunStatus {
     QUEUED,
     COLLECTING,
@@ -21,6 +23,7 @@ enum class AnalysisRunStatus {
     FAILED,
 }
 
+@Schema(description = "분석에 사용된 데이터 모드")
 enum class AnalysisDataMode {
     DEMO,
     LIVE,
