@@ -31,6 +31,11 @@ app:
       - http://localhost:8081
       - https://safelense-fe.pages.dev
       - https://safelense.site
+  registry-document:
+    bucket: ${REGISTRY_DOCUMENT_BUCKET:}
+    kms-key-id: ${REGISTRY_DOCUMENT_KMS_KEY_ID:}
+    region: ${AWS_REGION:ap-northeast-2}
+    retention: P30D
 
 auth:
   kakao:

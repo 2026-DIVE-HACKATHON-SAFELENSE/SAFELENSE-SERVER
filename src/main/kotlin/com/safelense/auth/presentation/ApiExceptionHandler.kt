@@ -15,6 +15,9 @@ import com.safelense.analysis.InvalidAnalysisStageException
 import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
+import com.safelense.document.InvalidRegistryDocumentException
+import com.safelense.document.RegistryDocumentNotFoundException
+import com.safelense.document.RegistryDocumentTooLargeException
 import com.safelense.notification.InvalidNotificationRequestException
 import com.safelense.notification.NotificationNotFoundException
 import com.safelense.property.HomePropertyAlreadyExistsException
@@ -97,6 +100,18 @@ class ApiExceptionHandler {
     @ExceptionHandler(HomePropertyNotFoundException::class)
     fun handleHomePropertyNotFound(): ResponseEntity<ApiError> =
         error(HttpStatus.NOT_FOUND, "PROPERTY_NOT_FOUND", "Property was not found.")
+
+    @ExceptionHandler(InvalidRegistryDocumentException::class)
+    fun handleInvalidRegistryDocument(): ResponseEntity<ApiError> =
+        error(HttpStatus.BAD_REQUEST, "INVALID_REGISTRY_DOCUMENT", "Registry document is invalid.")
+
+    @ExceptionHandler(RegistryDocumentTooLargeException::class)
+    fun handleRegistryDocumentTooLarge(): ResponseEntity<ApiError> =
+        error(HttpStatus.PAYLOAD_TOO_LARGE, "REGISTRY_DOCUMENT_TOO_LARGE", "Registry document is too large.")
+
+    @ExceptionHandler(RegistryDocumentNotFoundException::class)
+    fun handleRegistryDocumentNotFound(): ResponseEntity<ApiError> =
+        error(HttpStatus.NOT_FOUND, "REGISTRY_DOCUMENT_NOT_FOUND", "Registry document was not found.")
 
     @ExceptionHandler(InvalidNotificationRequestException::class)
     fun handleInvalidNotificationRequest(): ResponseEntity<ApiError> =
