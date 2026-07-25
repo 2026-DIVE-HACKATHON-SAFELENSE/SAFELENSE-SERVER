@@ -1,6 +1,11 @@
 // 저장된 분석 결과로 PDF 리포트가 생성되는지 검증하는 테스트
 package com.safelense.analysis
 
+import com.safelense.analysis.interpretation.EvidenceBackedStatement
+import com.safelense.analysis.report.AiInterpretationReport
+import com.safelense.analysis.report.ContractDecisionReportView
+import com.safelense.analysis.report.ContractSafetyReport
+import com.safelense.analysis.run.AnalysisDataMode
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -11,6 +16,29 @@ class AnalysisReportServiceTests {
     @Test
     fun `creates a pdf report from stored analysis detail`() {
         val bytes = service.create(detail())
+
+        assertThat(bytes.copyOfRange(0, 5).toString(Charsets.US_ASCII)).isEqualTo("%PDF-")
+        assertThat(bytes.size).isGreaterThan(500)
+    }
+
+    @Test
+    fun `creates a pdf report from a stored contract decision snapshot`() {
+        val bytes = service.create(
+            ContractDecisionReportView(
+                contractSafety = ContractSafetyReport(
+                    grade = AnalysisRiskGrade.UNKNOWN,
+                    confidence = 35,
+                    summary = "추가 확인이 필요합니다.",
+                ),
+                aiInterpretation = AiInterpretationReport(
+                    EvidenceBackedStatement("가격 근거를 확인하세요.", listOf("evidence-11")),
+                    fallback = false,
+                ),
+                actionGuide = listOf(EvidenceBackedStatement("공시가격을 대조하세요.", listOf("evidence-11"))),
+                dataMode = AnalysisDataMode.DEMO,
+                asOf = "2026-07-01T00:00:00Z",
+            ),
+        )
 
         assertThat(bytes.copyOfRange(0, 5).toString(Charsets.US_ASCII)).isEqualTo("%PDF-")
         assertThat(bytes.size).isGreaterThan(500)

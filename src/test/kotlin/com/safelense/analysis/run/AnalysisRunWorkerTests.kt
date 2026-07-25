@@ -10,6 +10,9 @@ import com.safelense.analysis.evidence.EvidenceStatus
 import com.safelense.analysis.extraction.RegistryExtractor
 import com.safelense.analysis.match.ConsultationCaseMatcher
 import com.safelense.analysis.match.MatchedCase
+import com.safelense.analysis.report.ContractDecisionReportGeneration
+import com.safelense.analysis.report.ContractDecisionReportGenerator
+import com.safelense.analysis.report.ContractDecisionReportView
 import com.safelense.document.RegistryDocumentRepository
 import com.safelense.property.BuildingType
 import com.safelense.property.HomeProperty
@@ -75,6 +78,9 @@ class AnalysisRunWorkerTests {
             matcher,
             AnalysisRiskRuleEngine(),
             ObjectMapper(),
+            ContractDecisionReportGenerator { _, _, _, _ ->
+                ContractDecisionReportGeneration(ContractDecisionReportView(), created = true)
+            },
             Clock.fixed(NOW, ZoneOffset.UTC),
         )
 

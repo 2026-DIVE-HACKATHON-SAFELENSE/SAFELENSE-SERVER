@@ -1,6 +1,7 @@
 // 저장된 분석 결과를 한글 PDF 리포트 바이트로 변환하는 서비스
 package com.safelense.analysis
 
+import com.safelense.analysis.report.ContractDecisionReportView
 import java.io.ByteArrayOutputStream
 import org.openpdf.text.Document
 import org.openpdf.text.Font
@@ -16,7 +17,52 @@ private const val REPORT_FONT_PATH =
 
 @Service
 class AnalysisReportService {
-    fun create(detail: AnalysisResultDetail): ByteArray {
+    fun create(detail: AnalysisResultDetail): ByteArray =
+        createPdf { document, titleFont, sectionFont, bodyFont ->
+            document.addTitle("세이프렌즈 위험 분석 리포트")
+            document.add(Paragraph("세이프렌즈 위험 분석 리포트", titleFont))
+            document.add(Paragraph("분석 ID  ${detail.id}", bodyFont))
+            document.add(Paragraph("계약 단계  ${detail.stage}", bodyFont))
+            document.add(Paragraph("위험 점수  ${detail.score ?: "판정 불가"}", bodyFont))
+            document.add(Paragraph("위험 등급  ${detail.grade}", bodyFont))
+            document.add(Paragraph("신뢰도  ${detail.confidence}", bodyFont))
+            document.add(Paragraph("분석 시각  ${detail.analyzedAt}", bodyFont))
+            document.add(Paragraph("요약", sectionFont))
+            document.add(Paragraph(detail.summary, bodyFont))
+            document.addItems("발견 사항", detail.findings, sectionFont, bodyFont)
+            document.addItems("권고 사항", detail.recommendations, sectionFont, bodyFont)
+        }
+
+    fun create(report: ContractDecisionReportView): ByteArray =
+        createPdf { document, titleFont, sectionFont, bodyFont ->
+            document.addTitle("세이프렌즈 계약 의사결정 리포트")
+            document.add(Paragraph("세이프렌즈 계약 의사결정 리포트", titleFont))
+            document.add(Paragraph("데이터 모드  ${report.dataMode}", bodyFont))
+            document.add(Paragraph("기준 시각  ${report.asOf}", bodyFont))
+            document.add(Paragraph("계약 안전성", sectionFont))
+            document.add(Paragraph("등급  ${report.contractSafety.grade}", bodyFont))
+            document.add(Paragraph("점수  ${report.contractSafety.score ?: "판정 불가"}", bodyFont))
+            document.add(Paragraph("신뢰도  ${report.contractSafety.confidence}", bodyFont))
+            document.add(Paragraph(report.contractSafety.summary, bodyFont))
+            document.add(Paragraph("AI 종합 해석", sectionFont))
+            document.add(Paragraph(report.aiInterpretation.summary.text, bodyFont))
+            document.addItems(
+                "거주 영향",
+                report.residentialImpacts.map { it.text },
+                sectionFont,
+                bodyFont,
+            )
+            document.addItems(
+                "행동 가이드",
+                report.actionGuide.map { it.text },
+                sectionFont,
+                bodyFont,
+            )
+        }
+
+    private fun createPdf(
+        content: (Document, Font, Font, Font) -> Unit,
+    ): ByteArray {
         val output = ByteArrayOutputStream()
         val document = Document(PageSize.A4, 48f, 48f, 48f, 48f)
         PdfWriter.getInstance(document, output)
@@ -33,20 +79,9 @@ class AnalysisReportService {
         val sectionFont = Font(baseFont, 14f, Font.BOLD)
         val bodyFont = Font(baseFont, 11f, Font.NORMAL)
 
-        document.addTitle("세이프렌즈 위험 분석 리포트")
         document.open()
         try {
-            document.add(Paragraph("세이프렌즈 위험 분석 리포트", titleFont))
-            document.add(Paragraph("분석 ID  ${detail.id}", bodyFont))
-            document.add(Paragraph("계약 단계  ${detail.stage}", bodyFont))
-            document.add(Paragraph("위험 점수  ${detail.score ?: "판정 불가"}", bodyFont))
-            document.add(Paragraph("위험 등급  ${detail.grade}", bodyFont))
-            document.add(Paragraph("신뢰도  ${detail.confidence}", bodyFont))
-            document.add(Paragraph("분석 시각  ${detail.analyzedAt}", bodyFont))
-            document.add(Paragraph("요약", sectionFont))
-            document.add(Paragraph(detail.summary, bodyFont))
-            document.addItems("발견 사항", detail.findings, sectionFont, bodyFont)
-            document.addItems("권고 사항", detail.recommendations, sectionFont, bodyFont)
+            content(document, titleFont, sectionFont, bodyFont)
         } finally {
             document.close()
         }

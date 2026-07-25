@@ -11,6 +11,7 @@ import com.safelense.analysis.evidence.EvidenceStatus
 import com.safelense.analysis.extraction.RegistryExtractor
 import com.safelense.analysis.match.ConsultationCaseMatcher
 import com.safelense.analysis.match.MatchedCase
+import com.safelense.analysis.report.ContractDecisionReportGenerator
 import com.safelense.document.RegistryDocumentRepository
 import com.safelense.property.HomePropertyRepository
 import java.time.Clock
@@ -39,6 +40,7 @@ class AnalysisRunWorker(
     private val matcher: ConsultationCaseMatcher,
     private val ruleEngine: AnalysisRiskRuleEngine,
     private val objectMapper: ObjectMapper,
+    private val reportGenerator: ContractDecisionReportGenerator,
     private val clock: Clock = Clock.systemUTC(),
 ) {
     @Scheduled(fixedDelayString = "\${app.analysis.worker-delay:PT5S}")
@@ -79,7 +81,9 @@ class AnalysisRunWorker(
                 listOf(unavailableEvidence("REGISTRY_DOCUMENT", startedAt))
             }
             val evidence = collected + extracted
-            evidenceRepository.saveAll(evidence.map { it.toEntity(requireNotNull(run.id)) })
+            val persistedEvidence = evidenceRepository
+                .saveAll(evidence.map { it.toEntity(requireNotNull(run.id)) })
+                .toList()
 
             run.status = AnalysisRunStatus.ANALYZING
             val matchedCases = try {
@@ -89,6 +93,7 @@ class AnalysisRunWorker(
                 emptyList()
             }
             val assessment = ruleEngine.assess(property, evidence, objectMapper)
+            val report = reportGenerator.generate(run, persistedEvidence, matchedCases, assessment)
 
             val hasUnavailableEvidence = evidence.any {
                 it.status == EvidenceStatus.UNAVAILABLE ||
@@ -96,7 +101,11 @@ class AnalysisRunWorker(
                     it.status == EvidenceStatus.CONFLICTING
             }
             run.status =
-                if (providerUnavailable || hasUnavailableEvidence) AnalysisRunStatus.PARTIAL
+                if (
+                    providerUnavailable ||
+                    hasUnavailableEvidence ||
+                    report.view.aiInterpretation.fallback
+                ) AnalysisRunStatus.PARTIAL
                 else AnalysisRunStatus.COMPLETED
             run.completedAt = Instant.now(clock)
             AnalysisRunArtifacts(evidence, matchedCases, assessment)

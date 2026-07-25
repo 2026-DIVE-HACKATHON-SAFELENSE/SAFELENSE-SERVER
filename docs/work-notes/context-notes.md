@@ -99,3 +99,6 @@
 - 2026-07-26. 새 분석 생성은 인증 사용자의 매물 소유권을 확인하고 `(propertyId, Idempotency-Key)`가 같으면 기존 실행을 반환한다. 새 실행은 `QUEUED`, `dataMode=DEMO`로 저장하고 API는 `202`와 상태 조회 위치를 반환한다.
 - 2026-07-26. 분석 워커는 실행을 비관적으로 잠근 뒤 `COLLECTING → EXTRACTING_DOCUMENT → ANALYZING`으로 전이한다. 근거에는 실행 ID를 붙여 저장하고 `AVAILABLE` 가격만 기존 규칙 입력으로 변환하며, 제공처 장애나 `UNAVAILABLE` 근거가 있으면 `PARTIAL`로 종료한다.
 - 2026-07-26. DB 폴링 워커는 servlet 웹 애플리케이션에서만 생성한다. prod의 non-web Flyway 사전 점검에는 스케줄러를 만들지 않아 마이그레이션 검증 프로세스가 정상 종료되게 한다.
+- 2026-07-26. 공식 OpenAI 문서의 현재 Responses API 계약에 따라 `store=false`와 엄격한 `text.format` JSON Schema를 사용하고 `output_text`만 파싱한다. 거부·HTTP 오류·구조 오류는 모델 결과로 취급하지 않으며 새 프로젝트 권장 기본 모델은 `gpt-5.6`으로 설정한다.
+- 2026-07-26. AI 요청에는 `evidence-{id}`, 정규화 값, 출처, 기준일, 상태, 규칙 결과와 비식별 사례만 포함한다. 서버는 존재하지 않는 근거 ID, 인용 근거에 없는 숫자, 단정적 법률 판단을 거절하고 규칙 요약·권고 문구로 대체한 뒤 실행을 `PARTIAL`로 종료한다.
+- 2026-07-26. 계약 의사결정 리포트는 실행별 `analysis_reports.report_json`에 한 번만 저장한다. 반복 생성과 조회는 최신 매물 상태를 다시 계산하지 않고 저장된 스냅샷을 사용하며 기존 과거 분석 결과 PDF와 새 계약 의사결정 PDF 경로를 모두 유지한다.
