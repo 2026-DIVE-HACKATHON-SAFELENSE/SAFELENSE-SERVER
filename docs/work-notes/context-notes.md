@@ -86,3 +86,6 @@
 - 2026-07-24. `server.port=-1`은 endpoint를 비활성화해도 web application process를 종료하지 않아 SSM 사전 점검을 블로킹했다. Flyway 점검은 non-web으로 실행하고, `SecurityConfig`는 servlet web application에서만 생성하도록 복원한다.
 - 2026-07-24. Spring Boot 4에는 `springdoc-openapi-starter-webmvc-ui:3.0.3`을 사용한다. `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`만 익명으로 허용하고 `server.forward-headers-strategy=framework`로 Caddy의 HTTPS forwarded header를 반영한다. `https://safelense.p-e.kr/v3/api-docs`와 `/swagger-ui/index.html`에서 200을 확인했다.
 - 2026-07-24. Hibernate connection pooling 로그가 DB URL을 출력한 것을 배포 로그에서 확인했다. `org.hibernate.orm.connections.pooling`을 WARN으로 올린 뒤 최신 배포 로그에서 DB URL 관련 행이 없음을 확인했다.
+- 2026-07-26. 서비스의 중심을 계약 전 의사결정 리포트로 피벗한다. 사용자는 여러 후보 매물을 분석하며, 자동 수집·선택 등기부·비식별 상담 사례를 근거로 계약 안전성, 거주 영향, AI 해석과 행동 가이드를 받는다.
+- 2026-07-26. 실제 공공 데이터와 HUG 상담 데이터 접근 권한은 아직 없어 첫 버전은 내부 데모로 운영한다. 모든 시드 수집 결과와 리포트에는 `DEMO` 데이터 모드를 표시하고 실제 제공처는 교체 가능한 어댑터로 연결한다.
+- 2026-07-26. 등기부 원본은 DB BLOB 대신 SSE-KMS 암호화 S3에 30일 보관한다. DB에는 S3 키, 해시, 메타데이터, OCR 상태만 저장하고 OpenAI에는 원본 파일·주소 원문·식별 정보를 보내지 않는다.

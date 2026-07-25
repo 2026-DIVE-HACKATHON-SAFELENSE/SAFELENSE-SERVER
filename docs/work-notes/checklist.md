@@ -82,3 +82,5 @@
 - [x] Hibernate가 SSM DB URL을 정보 로그에 남기지 않도록 운영 로그 수준을 고정한다.
 - [x] HTTPS 프록시 주소를 반영하는 공개 Swagger UI와 OpenAPI JSON을 추가한다.
 - [x] 운영 HTTPS 도메인에서 Swagger UI와 OpenAPI JSON을 검증한다.
+- [x] 계약 전 의사결정 리포트 피벗 설계를 사용자와 확정한다.
+- [x] 여러 매물·수집 근거·S3 등기부·AI 해석·재분석 실행을 포함한 구현 계획을 작성한다.
