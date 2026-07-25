@@ -41,6 +41,7 @@ class SsmEnvironmentPostProcessorTests {
         assertThat(environment.getProperty("DB_URL")).isEqualTo("jdbc:postgresql://example/db")
         assertThat(environment.getProperty("JWT_SECRET")).isEqualTo("secret")
         assertThat(environment.getProperty("OPENAI_API_KEY")).isEqualTo("openai-secret")
+        assertThat(environment.getProperty("UPSTAGE_API_KEY")).isEqualTo("upstage-secret")
         assertThat(environment.getProperty("REGISTRY_DOCUMENT_BUCKET")).isEqualTo("registry-bucket")
         assertThat(environment.getProperty("REGISTRY_DOCUMENT_KMS_KEY_ID")).isEqualTo("kms-key")
         assertThat(environment.getProperty("PUBLIC_DATA_SERVICE_KEY")).isEqualTo("public-data-key")
@@ -71,6 +72,7 @@ class SsmEnvironmentPostProcessorTests {
             "JWT_ACCESS_TOKEN_TTL" to "PT30M",
             "JWT_REFRESH_TOKEN_TTL" to "P14D",
             "OPENAI_API_KEY" to "openai-secret",
+            "UPSTAGE_API_KEY" to "upstage-secret",
             "REGISTRY_DOCUMENT_BUCKET" to "registry-bucket",
             "REGISTRY_DOCUMENT_KMS_KEY_ID" to "kms-key",
             "PUBLIC_DATA_SERVICE_KEY" to "public-data-key",

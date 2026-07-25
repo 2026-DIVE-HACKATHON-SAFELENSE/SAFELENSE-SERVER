@@ -1,4 +1,4 @@
-// 비식별 근거만 OpenAI 해석 경계에 전달하고 검증 실패 시 규칙 문구로 대체하는 서비스
+// 비식별 근거만 AI 해석 경계에 전달하고 검증 실패 시 규칙 문구로 대체하는 서비스
 package com.safelense.analysis.interpretation
 
 import com.safelense.analysis.AnalysisRiskAssessment
@@ -38,7 +38,7 @@ data class InterpretedReport(
 class OpenAiReportInterpreter(
     private val client: OpenAiReportClient,
     private val validator: ReportEvidenceValidator,
-    private val properties: OpenAiProperties,
+    private val properties: UpstageProperties,
 ) {
     fun interpret(
         evidence: List<CollectedEvidence>,
@@ -66,10 +66,10 @@ class OpenAiReportInterpreter(
         } catch (exception: Exception) {
             val reason = when (exception) {
                 is InvalidAiEvidenceException -> exception.reason
-                is OpenAiReportUnavailableException -> exception.reason
+                is UpstageReportUnavailableException -> exception.reason
                 else -> exception.javaClass.simpleName
             }
-            logger.warn("OpenAI report fallback. reason={}", reason)
+            logger.warn("Upstage report fallback. reason={}", reason)
             val evidenceIds = facts
                 .filter { it.status == EvidenceStatus.AVAILABLE }
                 .map { it.id }

@@ -1,4 +1,4 @@
-// OpenAI Responses API의 구조화 출력 요청과 output_text 파싱을 검증하는 테스트
+// Upstage Chat Completions API의 구조화 출력 요청과 응답 파싱을 검증하는 테스트
 package com.safelense.analysis.interpretation
 
 import com.safelense.analysis.AnalysisRiskAssessment
@@ -25,26 +25,26 @@ import org.springframework.web.client.RestClient
 import tools.jackson.databind.ObjectMapper
 
 @ExtendWith(OutputCaptureExtension::class)
-class OpenAiHttpReportClientTests {
+class UpstageHttpReportClientTests {
     @Test
-    fun `requests a non stored strict JSON schema response and parses output text`() {
+    fun `requests a strict JSON schema chat completion and parses message content`() {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
         val objectMapper = ObjectMapper()
-        val client = OpenAiHttpReportClient(
+        val client = UpstageHttpReportClient(
             builder,
-            OpenAiProperties("test-key", "gpt-5.6", "https://api.openai.com/v1"),
+            UpstageProperties("test-key", "solar-pro3", "https://api.upstage.ai/v1"),
             objectMapper,
         )
         val resultJson =
             """{"summary":{"text":"가격을 확인하세요.","evidenceIds":["evidence-11"]},"attentionLevel":"CAUTION","mitigationStatus":"POSSIBLE","residentialImpacts":[],"actionGuide":[]}"""
-        val responseJson =
-            """{"output":[{"type":"message","content":[{"type":"output_text","text":${objectMapper.writeValueAsString(resultJson)}}]}]}"""
-        server.expect(requestTo("https://api.openai.com/v1/responses"))
+        val responseJson = """{"choices":[{"message":{"content":${objectMapper.writeValueAsString(resultJson)}}}]}"""
+        server.expect(requestTo("https://api.upstage.ai/v1/chat/completions"))
             .andExpect(method(HttpMethod.POST))
             .andExpect(header(HttpHeaders.AUTHORIZATION, "Bearer test-key"))
-            .andExpect(content().string(containsString("\"model\":\"gpt-5.6\"")))
-            .andExpect(content().string(containsString("\"store\":false")))
+            .andExpect(content().string(containsString("\"model\":\"solar-pro3\"")))
+            .andExpect(content().string(containsString("\"messages\"")))
+            .andExpect(content().string(containsString("\"response_format\"")))
             .andExpect(content().string(containsString("\"type\":\"json_schema\"")))
             .andExpect(content().string(containsString("\"strict\":true")))
             .andExpect(content().string(containsString("\"attentionLevel\"")))
@@ -62,23 +62,23 @@ class OpenAiHttpReportClientTests {
     }
 
     @Test
-    fun `logs an OpenAI HTTP error without credentials or request data`(output: CapturedOutput) {
+    fun `logs an Upstage HTTP error without credentials or request data`(output: CapturedOutput) {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
-        val client = OpenAiHttpReportClient(
+        val client = UpstageHttpReportClient(
             builder,
-            OpenAiProperties("secret-openai-key", "gpt-5.6", "https://api.openai.com/v1"),
+            UpstageProperties("secret-upstage-key", "solar-pro3", "https://api.upstage.ai/v1"),
             ObjectMapper(),
         )
-        server.expect(requestTo("https://api.openai.com/v1/responses"))
+        server.expect(requestTo("https://api.upstage.ai/v1/chat/completions"))
             .andRespond(withStatus(HttpStatus.UNAUTHORIZED))
 
         org.assertj.core.api.Assertions.assertThatThrownBy { client.generate(request()) }
-            .isInstanceOf(OpenAiReportUnavailableException::class.java)
+            .isInstanceOf(UpstageReportUnavailableException::class.java)
 
         assertThat(output.all)
-            .contains("OpenAI request failed", "httpStatus=401")
-            .doesNotContain("secret-openai-key", "50000")
+            .contains("Upstage request failed", "httpStatus=401")
+            .doesNotContain("secret-upstage-key", "50000")
         server.verify()
     }
 

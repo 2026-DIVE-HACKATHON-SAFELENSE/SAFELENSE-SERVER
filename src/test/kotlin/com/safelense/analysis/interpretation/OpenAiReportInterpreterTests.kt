@@ -1,4 +1,4 @@
-// OpenAI 요청의 비식별 근거 구성과 장애 시 규칙 기반 대체를 검증하는 테스트
+// AI 요청의 비식별 근거 구성과 장애 시 규칙 기반 대체를 검증하는 테스트
 package com.safelense.analysis.interpretation
 
 import com.safelense.analysis.AnalysisRiskGrade
@@ -15,10 +15,10 @@ import org.springframework.boot.test.system.OutputCaptureExtension
 
 @ExtendWith(OutputCaptureExtension::class)
 class OpenAiReportInterpreterTests {
-    private val properties = OpenAiProperties(
+    private val properties = UpstageProperties(
         apiKey = "test-key",
-        model = "gpt-5.6",
-        baseUrl = "https://api.openai.com/v1",
+        model = "solar-pro3",
+        baseUrl = "https://api.upstage.ai/v1",
     )
 
     @Test
@@ -35,7 +35,7 @@ class OpenAiReportInterpreterTests {
         val interpreted = interpreter.interpret(listOf(evidence()), assessment(), cases())
 
         assertThat(interpreted.fallback).isFalse()
-        assertThat(interpreted.model).isEqualTo("gpt-5.6")
+        assertThat(interpreted.model).isEqualTo("solar-pro3")
         val fact = client.requests.single().facts.single()
         assertThat(fact.id).isEqualTo("evidence-11")
         assertThat(fact.evidenceKey).isEqualTo("OFFICIAL_PRICE")
@@ -97,7 +97,7 @@ class OpenAiReportInterpreterTests {
 
         assertThat(interpreted.fallback).isTrue()
         assertThat(output.all)
-            .contains("OpenAI report fallback", "reason=UNKNOWN_EVIDENCE_ID")
+            .contains("Upstage report fallback", "reason=UNKNOWN_EVIDENCE_ID")
             .doesNotContain("민감한 AI 원문", "test-key")
     }
 

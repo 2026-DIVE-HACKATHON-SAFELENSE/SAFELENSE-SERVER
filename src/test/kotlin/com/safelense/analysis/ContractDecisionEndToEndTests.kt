@@ -8,6 +8,7 @@ import com.safelense.analysis.extraction.RegistryDocumentStatusExtractor
 import com.safelense.analysis.interpretation.OpenAiProperties
 import com.safelense.analysis.interpretation.OpenAiReportClient
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
+import com.safelense.analysis.interpretation.UpstageProperties
 import com.safelense.analysis.interpretation.ReportEvidenceValidator
 import com.safelense.analysis.match.AnalysisCaseMatchRepository
 import com.safelense.analysis.match.ConsultationCaseMatcher
@@ -90,7 +91,7 @@ class ContractDecisionEndToEndTests {
                     throw IllegalStateException("secret-openai-key at s3://private/${property.address}")
                 },
                 ReportEvidenceValidator(),
-                OpenAiProperties("secret-openai-key", "gpt-5.6", "https://api.openai.com/v1"),
+                UpstageProperties("secret-upstage-key", "solar-pro3", "https://api.upstage.ai/v1"),
             ),
             objectMapper,
             clock,

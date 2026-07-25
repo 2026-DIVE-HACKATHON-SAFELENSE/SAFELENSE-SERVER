@@ -41,6 +41,7 @@ class SsmEnvironmentPostProcessor(
             "/safelense/prod/JWT_ACCESS_TOKEN_TTL",
             "/safelense/prod/JWT_REFRESH_TOKEN_TTL",
             "/safelense/prod/OPENAI_API_KEY",
+            "/safelense/prod/UPSTAGE_API_KEY",
             "/safelense/prod/REGISTRY_DOCUMENT_BUCKET",
             "/safelense/prod/REGISTRY_DOCUMENT_KMS_KEY_ID",
             "/safelense/prod/PUBLIC_DATA_SERVICE_KEY",

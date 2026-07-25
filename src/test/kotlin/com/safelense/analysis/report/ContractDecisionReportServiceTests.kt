@@ -9,10 +9,10 @@ import com.safelense.analysis.interpretation.AiAttentionLevel
 import com.safelense.analysis.interpretation.AiMitigationStatus
 import com.safelense.analysis.interpretation.AiReportResult
 import com.safelense.analysis.interpretation.EvidenceBackedStatement
-import com.safelense.analysis.interpretation.OpenAiProperties
 import com.safelense.analysis.interpretation.OpenAiReportClient
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
 import com.safelense.analysis.interpretation.OpenAiReportRequest
+import com.safelense.analysis.interpretation.UpstageProperties
 import com.safelense.analysis.interpretation.ReportEvidenceValidator
 import com.safelense.analysis.match.CONSULTATION_SOURCE
 import com.safelense.analysis.match.MatchedCase
@@ -42,7 +42,7 @@ class ContractDecisionReportServiceTests {
         OpenAiReportInterpreter(
             client,
             ReportEvidenceValidator(),
-            OpenAiProperties("test-key", "gpt-5.6", "https://api.openai.com/v1"),
+            UpstageProperties("test-key", "solar-pro3", "https://api.upstage.ai/v1"),
         ),
         ObjectMapper(),
         Clock.fixed(NOW, ZoneOffset.UTC),
