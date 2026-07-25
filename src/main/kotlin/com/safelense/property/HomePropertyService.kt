@@ -2,7 +2,6 @@
 package com.safelense.property
 
 import java.time.LocalDate
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -41,14 +40,17 @@ class HomePropertyService(
     private val homePropertyRepository: HomePropertyRepository,
 ) {
     @Transactional(readOnly = true)
+    fun list(userId: Long): List<HomeProperty> = homePropertyRepository.findAllByUserIdOrderByIdDesc(userId)
+
+    @Transactional(readOnly = true)
     fun get(userId: Long): HomeProperty? = homePropertyRepository.findByUserId(userId)
+
+    @Transactional(readOnly = true)
+    fun get(userId: Long, propertyId: Long): HomeProperty =
+        homePropertyRepository.findByIdAndUserId(propertyId, userId) ?: throw HomePropertyNotFoundException()
 
     @Transactional
     fun create(userId: Long, command: HomePropertyCreateCommand): HomeProperty {
-        if (homePropertyRepository.findByUserId(userId) != null) {
-            throw HomePropertyAlreadyExistsException()
-        }
-
         val property = HomeProperty(
             userId = userId,
             address = command.address.trim(),
@@ -57,11 +59,7 @@ class HomePropertyService(
             landlordName = command.landlordName.normalizeOptionalText(),
             plannedContractDate = command.plannedContractDate,
         )
-        return try {
-            homePropertyRepository.saveAndFlush(property)
-        } catch (_: DataIntegrityViolationException) {
-            throw HomePropertyAlreadyExistsException()
-        }
+        return homePropertyRepository.saveAndFlush(property)
     }
 
     @Transactional

@@ -8,10 +8,8 @@ import org.junit.jupiter.api.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
-import org.springframework.dao.DataIntegrityViolationException
 
 class HomePropertyServiceTests {
     private val repository = mock(HomePropertyRepository::class.java)
@@ -51,43 +49,23 @@ class HomePropertyServiceTests {
     }
 
     @Test
-    fun `rejects a second property for the same user`() {
+    fun `creates another property for the same user`() {
         `when`(repository.findByUserId(7L)).thenReturn(property(userId = 7L))
+        `when`(repository.saveAndFlush(any(HomeProperty::class.java))).thenAnswer { it.arguments[0] }
 
-        assertThatThrownBy {
-            service.create(
-                7L,
-                HomePropertyCreateCommand(
-                    address = "새 주소",
-                    depositAmount = 30000L,
-                    buildingType = BuildingType.APARTMENT,
-                    landlordName = null,
-                    plannedContractDate = null,
-                ),
-            )
-        }.isInstanceOf(HomePropertyAlreadyExistsException::class.java)
+        val result = service.create(
+            7L,
+            HomePropertyCreateCommand(
+                address = "새 주소",
+                depositAmount = 30000L,
+                buildingType = BuildingType.APARTMENT,
+                landlordName = null,
+                plannedContractDate = null,
+            ),
+        )
 
-        verify(repository, never()).saveAndFlush(any(HomeProperty::class.java))
-    }
-
-    @Test
-    fun `maps a concurrent duplicate insert to already exists`() {
-        `when`(repository.findByUserId(7L)).thenReturn(null)
-        `when`(repository.saveAndFlush(any(HomeProperty::class.java)))
-            .thenThrow(DataIntegrityViolationException("duplicate user_id"))
-
-        assertThatThrownBy {
-            service.create(
-                7L,
-                HomePropertyCreateCommand(
-                    address = "새 주소",
-                    depositAmount = 30000L,
-                    buildingType = BuildingType.APARTMENT,
-                    landlordName = null,
-                    plannedContractDate = null,
-                ),
-            )
-        }.isInstanceOf(HomePropertyAlreadyExistsException::class.java)
+        assertThat(result.address).isEqualTo("새 주소")
+        verify(repository).saveAndFlush(any(HomeProperty::class.java))
     }
 
     @Test

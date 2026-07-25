@@ -5,5 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface HomePropertyRepository : JpaRepository<HomeProperty, Long> {
     fun findByUserId(userId: Long): HomeProperty?
+    fun findAllByUserIdOrderByIdDesc(userId: Long): List<HomeProperty>
     fun findByIdAndUserId(id: Long, userId: Long): HomeProperty?
 }

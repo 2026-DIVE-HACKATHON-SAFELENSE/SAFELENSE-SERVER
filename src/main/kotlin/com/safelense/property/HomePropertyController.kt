@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.PositiveOrZero
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -27,7 +27,7 @@ data class HomePropertyCreateRequest(
     @field:Size(max = 500)
     @field:Schema(description = "주택 주소", example = "서울특별시 강남구 테헤란로 1")
     val address: String,
-    @field:PositiveOrZero
+    @field:Positive
     @field:Schema(description = "전세 보증금. 단위는 만원", example = "20000")
     val depositAmount: Long,
     @field:Schema(description = "주택 유형", example = "APARTMENT")
