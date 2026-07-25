@@ -29,6 +29,21 @@ class AnalysisRiskRuleEngineEvidenceTests {
         assertThat(assessment.confidence).isZero()
     }
 
+    @Test
+    fun `ignores former transaction price and rent market as property value`() {
+        val assessment = engine.assess(
+            property(),
+            listOf(
+                evidence("TRANSACTION_PRICE", """{"amount":100000}"""),
+                evidence("RENT_MARKET", """{"medianDepositManwon":30000}"""),
+            ),
+            objectMapper,
+        )
+
+        assertThat(assessment.score).isNull()
+        assertThat(assessment.confidence).isZero()
+    }
+
     private fun price(status: EvidenceStatus) =
         CollectedEvidenceCommand(
             evidenceKey = "OFFICIAL_PRICE",
@@ -39,6 +54,18 @@ class AnalysisRiskRuleEngineEvidenceTests {
             collectedAt = Instant.parse("2026-07-26T00:00:00Z"),
             confidence = if (status == EvidenceStatus.AVAILABLE) 90 else 0,
             status = status,
+        )
+
+    private fun evidence(key: String, valueJson: String) =
+        CollectedEvidenceCommand(
+            evidenceKey = key,
+            valueJson = valueJson,
+            source = "LIVE_TEST",
+            sourceIdentifier = null,
+            asOf = Instant.parse("2026-07-01T00:00:00Z"),
+            collectedAt = Instant.parse("2026-07-26T00:00:00Z"),
+            confidence = 90,
+            status = EvidenceStatus.AVAILABLE,
         )
 
     private fun property() =

@@ -68,15 +68,12 @@ class AnalysisRiskRuleEngine {
         objectMapper: ObjectMapper,
     ): AnalysisRiskAssessment {
         val available = evidence.filter { it.status == EvidenceStatus.AVAILABLE }
-        val estimatedPropertyValue = listOf("TRANSACTION_PRICE", "OFFICIAL_PRICE")
-            .firstNotNullOfOrNull { key ->
-                available.firstOrNull { it.evidenceKey == key }
-                    ?.valueJson
-                    ?.let(objectMapper::readTree)
-                    ?.get("amount")
-                    ?.takeIf { it.isIntegralNumber }
-                    ?.asLong()
-            }
+        val estimatedPropertyValue = available.firstOrNull { it.evidenceKey == "OFFICIAL_PRICE" }
+            ?.valueJson
+            ?.let(objectMapper::readTree)
+            ?.get("amount")
+            ?.takeIf { it.isIntegralNumber }
+            ?.asLong()
         return assess(
             AnalysisRiskInput(
                 stage = AnalysisStage.BEFORE_CONTRACT,

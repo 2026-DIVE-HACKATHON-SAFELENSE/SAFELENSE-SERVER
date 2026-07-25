@@ -4,7 +4,7 @@ package com.safelense.analysis
 import com.safelense.analysis.collection.PropertyDataCollector
 import com.safelense.analysis.evidence.CollectedEvidence
 import com.safelense.analysis.evidence.CollectedEvidenceRepository
-import com.safelense.analysis.extraction.DemoRegistryExtractor
+import com.safelense.analysis.extraction.RegistryDocumentStatusExtractor
 import com.safelense.analysis.interpretation.OpenAiProperties
 import com.safelense.analysis.interpretation.OpenAiReportClient
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
@@ -100,7 +100,7 @@ class ContractDecisionEndToEndTests {
             PropertyDataCollector {
                 throw IllegalStateException("OPENAI_API_KEY unavailable for ${it.address}")
             },
-            DemoRegistryExtractor(clock),
+            RegistryDocumentStatusExtractor(clock),
             DemoConsultationCaseMatcher(),
             AnalysisRiskRuleEngine(),
             objectMapper,

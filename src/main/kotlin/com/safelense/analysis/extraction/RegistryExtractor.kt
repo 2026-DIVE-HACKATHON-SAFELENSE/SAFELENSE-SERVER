@@ -14,7 +14,7 @@ fun interface RegistryExtractor {
 }
 
 @Component
-class DemoRegistryExtractor(
+class RegistryDocumentStatusExtractor(
     private val clock: Clock = Clock.systemUTC(),
 ) : RegistryExtractor {
     override fun extract(document: RegistryDocument?): List<CollectedEvidenceCommand> {
@@ -30,7 +30,7 @@ class DemoRegistryExtractor(
             CollectedEvidenceCommand(
                 evidenceKey = "REGISTRY_DOCUMENT",
                 valueJson = if (status == EvidenceStatus.AVAILABLE) """{"extracted":true}""" else null,
-                source = "USER_DOCUMENT",
+                source = "REGISTRY_UPLOAD_STATUS",
                 sourceIdentifier = document?.sha256,
                 asOf = null,
                 collectedAt = Instant.now(clock),

@@ -11,7 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class RegistryExtractorTests {
-    private val extractor: RegistryExtractor = DemoRegistryExtractor(
+    private val extractor: RegistryExtractor = RegistryDocumentStatusExtractor(
         Clock.fixed(Instant.parse("2026-07-26T00:00:00Z"), ZoneOffset.UTC),
     )
 
@@ -43,5 +43,6 @@ class RegistryExtractorTests {
         val single = evidence.single()
         assertThat(single.status).isEqualTo(EvidenceStatus.UNAVAILABLE)
         assertThat(single.sourceIdentifier).isEqualTo("a".repeat(64))
+        assertThat(single.source).isEqualTo("REGISTRY_UPLOAD_STATUS")
     }
 }
