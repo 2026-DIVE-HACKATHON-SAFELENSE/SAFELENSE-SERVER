@@ -87,8 +87,11 @@ class AnalysisResultService(
 
     @Transactional(readOnly = true)
     fun get(userId: Long, analysisId: Long): AnalysisResultDetail =
+        find(userId, analysisId) ?: throw AnalysisResultNotFoundException()
+
+    @Transactional(readOnly = true)
+    fun find(userId: Long, analysisId: Long): AnalysisResultDetail? =
         repository.findByIdAndUserId(analysisId, userId)?.toDetail()
-            ?: throw AnalysisResultNotFoundException()
 
     private fun AnalysisResult.toSummary(): AnalysisResultSummary =
         AnalysisResultSummary(

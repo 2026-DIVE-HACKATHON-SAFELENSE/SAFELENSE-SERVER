@@ -12,6 +12,8 @@ interface AnalysisRunRepository : JpaRepository<AnalysisRun, Long> {
 
     fun findByIdAndUserId(id: Long, userId: Long): AnalysisRun?
 
+    fun findAllByPropertyIdAndUserIdOrderByIdDesc(propertyId: Long, userId: Long): List<AnalysisRun>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select run from AnalysisRun run where run.id = :id")
     fun findByIdForUpdate(@Param("id") id: Long): AnalysisRun?

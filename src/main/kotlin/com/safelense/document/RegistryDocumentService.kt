@@ -20,6 +20,8 @@ class RegistryDocumentTooLargeException : RuntimeException()
 
 class RegistryDocumentNotFoundException : RuntimeException()
 
+class RegistryDocumentExpiredException : RuntimeException()
+
 data class RegistryDocumentView(
     val id: Long,
     val mimeType: String,
@@ -68,8 +70,13 @@ class RegistryDocumentService(
     fun delete(userId: Long, propertyId: Long, documentId: Long) {
         propertyRepository.findByIdAndUserId(propertyId, userId) ?: throw HomePropertyNotFoundException()
         val document = documentRepository.findByIdAndPropertyId(documentId, propertyId)
-            ?.takeIf { it.deletedAt == null }
             ?: throw RegistryDocumentNotFoundException()
+        if (document.extractionStatus == RegistryExtractionStatus.EXPIRED) {
+            throw RegistryDocumentExpiredException()
+        }
+        if (document.deletedAt != null) {
+            throw RegistryDocumentNotFoundException()
+        }
 
         storage.delete(document.storageKey)
         document.deletedAt = Instant.now(clock)

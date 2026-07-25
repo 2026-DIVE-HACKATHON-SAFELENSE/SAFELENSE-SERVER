@@ -18,7 +18,11 @@ class SsmEnvironmentPostProcessor(
             return
         }
 
-        val values = readerFactory().read(parameterNames)
+        val reader = readerFactory()
+        val values = parameterNames
+            .chunked(10)
+            .flatMap { reader.read(it).entries }
+            .associate { it.toPair() }
         if (values.keys != parameterNames.map { it.substringAfterLast('/') }.toSet()) {
             throw IllegalStateException("Required SSM parameters are unavailable")
         }
@@ -36,6 +40,9 @@ class SsmEnvironmentPostProcessor(
             "/safelense/prod/JWT_SECRET",
             "/safelense/prod/JWT_ACCESS_TOKEN_TTL",
             "/safelense/prod/JWT_REFRESH_TOKEN_TTL",
+            "/safelense/prod/OPENAI_API_KEY",
+            "/safelense/prod/REGISTRY_DOCUMENT_BUCKET",
+            "/safelense/prod/REGISTRY_DOCUMENT_KMS_KEY_ID",
         )
     }
 }

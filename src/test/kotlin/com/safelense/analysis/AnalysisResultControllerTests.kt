@@ -1,6 +1,10 @@
 // 분석 이력 목록과 상세 조회의 HTTP 계약을 검증하는 테스트
 package com.safelense.analysis
 
+import com.safelense.analysis.report.ContractDecisionReportService
+import com.safelense.analysis.report.ContractDecisionReportView
+import com.safelense.analysis.report.ContractSafetyReport
+import com.safelense.analysis.run.AnalysisDataMode
 import com.safelense.auth.presentation.ApiExceptionHandler
 import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
@@ -25,12 +29,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 class AnalysisResultControllerTests {
     private val service = mock(AnalysisResultService::class.java)
     private val reportService = mock(AnalysisReportService::class.java)
+    private val contractReportService = mock(ContractDecisionReportService::class.java)
     private lateinit var mockMvc: MockMvc
 
     @BeforeEach
     fun setUp() {
         mockMvc = MockMvcBuilders
-            .standaloneSetup(AnalysisResultController(service, reportService))
+            .standaloneSetup(AnalysisResultController(service, reportService, contractReportService))
             .setControllerAdvice(ApiExceptionHandler())
             .setMessageConverters(JacksonJsonHttpMessageConverter(), ByteArrayHttpMessageConverter())
             .build()
@@ -82,6 +87,7 @@ class AnalysisResultControllerTests {
             "/api/v1/analyses?size=bad",
             "/api/v1/analyses?stage=bad",
             "/api/v1/analyses/bad",
+            "/api/v1/analyses/31?resultType=bad",
         ).forEach { path ->
             mockMvc.perform(get(path).principal(authentication()))
                 .andExpect(status().isBadRequest)
@@ -92,7 +98,7 @@ class AnalysisResultControllerTests {
 
     @Test
     fun `gets an owned analysis result`() {
-        `when`(service.get(7L, 31L)).thenReturn(detail())
+        `when`(service.find(7L, 31L)).thenReturn(detail())
 
         mockMvc.perform(get("/api/v1/analyses/31").principal(authentication()))
             .andExpect(status().isOk)
@@ -104,18 +110,48 @@ class AnalysisResultControllerTests {
 
     @Test
     fun `hides an analysis result not owned by the user`() {
-        `when`(service.get(7L, 31L)).thenThrow(AnalysisResultNotFoundException())
-
         mockMvc.perform(get("/api/v1/analyses/31").principal(authentication()))
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.code").value("ANALYSIS_NOT_FOUND"))
     }
 
     @Test
+    fun `gets an immutable contract decision report`() {
+        `when`(contractReportService.find(7L, 31L)).thenReturn(contractReport())
+
+        mockMvc.perform(get("/api/v1/analyses/31").principal(authentication()))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.contractSafety.grade").value("LOW"))
+            .andExpect(jsonPath("$.contractSafety.score").value(20))
+            .andExpect(jsonPath("$.dataMode").value("DEMO"))
+
+        verify(service).find(7L, 31L)
+    }
+
+    @Test
+    fun `uses an explicit result type when legacy and contract ids overlap`() {
+        `when`(service.find(7L, 31L)).thenReturn(detail())
+        `when`(contractReportService.find(7L, 31L)).thenReturn(contractReport())
+
+        mockMvc.perform(get("/api/v1/analyses/31").principal(authentication()))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.id").value(31))
+            .andExpect(jsonPath("$.contractSafety").doesNotExist())
+
+        mockMvc.perform(
+            get("/api/v1/analyses/31")
+                .principal(authentication())
+                .param("resultType", "CONTRACT_DECISION"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.contractSafety.grade").value("LOW"))
+    }
+
+    @Test
     fun `downloads an owned analysis result as pdf`() {
         val detail = detail()
         val pdf = "%PDF-report".toByteArray()
-        `when`(service.get(7L, 31L)).thenReturn(detail)
+        `when`(service.find(7L, 31L)).thenReturn(detail)
         `when`(reportService.create(detail)).thenReturn(pdf)
 
         mockMvc.perform(get("/api/v1/analyses/31/report.pdf").principal(authentication()))
@@ -124,8 +160,29 @@ class AnalysisResultControllerTests {
             .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"safelense-analysis-31.pdf\""))
             .andExpect(content().bytes(pdf))
 
-        verify(service).get(7L, 31L)
+        verify(service).find(7L, 31L)
         verify(reportService).create(detail)
+    }
+
+    @Test
+    fun `downloads an immutable contract decision report as pdf`() {
+        val report = contractReport()
+        val pdf = "%PDF-contract-report".toByteArray()
+        `when`(contractReportService.find(7L, 31L)).thenReturn(report)
+        `when`(service.find(7L, 31L)).thenReturn(detail())
+        `when`(reportService.create(report)).thenReturn(pdf)
+
+        mockMvc.perform(
+            get("/api/v1/analyses/31/report.pdf")
+                .principal(authentication())
+                .param("resultType", "CONTRACT_DECISION"),
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+            .andExpect(content().bytes(pdf))
+
+        verifyNoInteractions(service)
+        verify(reportService).create(report)
     }
 
     private fun summary() =
@@ -155,6 +212,18 @@ class AnalysisResultControllerTests {
             recommendations = listOf("권고"),
             ruleVersion = "2026-07-24-v1",
             analyzedAt = Instant.parse("2026-07-24T10:15:30Z"),
+        )
+
+    private fun contractReport() =
+        ContractDecisionReportView(
+            contractSafety = ContractSafetyReport(
+                score = 20,
+                grade = AnalysisRiskGrade.LOW,
+                confidence = 90,
+                summary = "확인된 중대 위험이 없습니다.",
+            ),
+            dataMode = AnalysisDataMode.DEMO,
+            asOf = "2026-07-26T00:00:00Z",
         )
 
     private fun authentication() = UsernamePasswordAuthenticationToken(7L, null)

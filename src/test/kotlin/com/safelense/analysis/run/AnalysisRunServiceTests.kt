@@ -45,6 +45,41 @@ class AnalysisRunServiceTests {
             .isInstanceOf(AnalysisRunNotFoundException::class.java)
     }
 
+    @Test
+    fun `lists owned property runs and exposes only public retry information`() {
+        `when`(propertyRepository.findByIdAndUserId(2L, 1L)).thenReturn(property())
+        `when`(runRepository.findAllByPropertyIdAndUserIdOrderByIdDesc(2L, 1L)).thenReturn(
+            listOf(
+                AnalysisRun(
+                    id = 4L,
+                    propertyId = 2L,
+                    userId = 1L,
+                    status = AnalysisRunStatus.FAILED,
+                    dataMode = AnalysisDataMode.DEMO,
+                    idempotencyKey = "run-2",
+                    forceRefresh = true,
+                    failureCode = "provider timeout at s3://private-bucket/document.pdf",
+                ),
+                AnalysisRun(
+                    id = 3L,
+                    propertyId = 2L,
+                    userId = 1L,
+                    status = AnalysisRunStatus.COMPLETED,
+                    dataMode = AnalysisDataMode.DEMO,
+                    idempotencyKey = "run-1",
+                    forceRefresh = false,
+                ),
+            ),
+        )
+
+        val history = service.history(1L, 2L)
+
+        assertThat(history.analyses.map { it.id }).containsExactly(4L, 3L)
+        assertThat(history.analyses.first().retryable).isTrue()
+        assertThat(history.analyses.first().failureCode).isEqualTo("ANALYSIS_EXECUTION_FAILED")
+        assertThat(history.analyses.last().retryable).isFalse()
+    }
+
     private fun property() =
         HomeProperty(
             id = 2L,

@@ -125,7 +125,12 @@ class ContractDecisionReportService(
 
     @Transactional(readOnly = true)
     fun get(userId: Long, analysisId: Long): ContractDecisionReportView {
-        runRepository.findByIdAndUserId(analysisId, userId) ?: throw AnalysisRunNotFoundException()
+        return find(userId, analysisId) ?: throw AnalysisRunNotFoundException()
+    }
+
+    @Transactional(readOnly = true)
+    fun find(userId: Long, analysisId: Long): ContractDecisionReportView? {
+        runRepository.findByIdAndUserId(analysisId, userId) ?: return null
         val report = reportRepository.findByRunId(analysisId) ?: throw AnalysisRunNotFoundException()
         return decode(report.reportJson)
     }

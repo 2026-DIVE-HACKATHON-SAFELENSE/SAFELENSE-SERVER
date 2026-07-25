@@ -43,4 +43,10 @@ class AnalysisRunController(
         authentication: Authentication,
         @PathVariable analysisId: Long,
     ): AnalysisRunView = service.status(authentication.principal as Long, analysisId)
+
+    @GetMapping("/api/v1/properties/{propertyId}/analyses")
+    fun history(
+        authentication: Authentication,
+        @PathVariable propertyId: Long,
+    ): AnalysisRunHistoryView = service.history(authentication.principal as Long, propertyId)
 }

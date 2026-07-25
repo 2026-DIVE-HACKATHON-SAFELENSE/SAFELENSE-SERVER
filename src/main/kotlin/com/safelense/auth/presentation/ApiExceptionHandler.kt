@@ -18,6 +18,7 @@ import com.safelense.auth.kakao.KakaoApiUnavailableException
 import com.safelense.auth.kakao.KakaoAuthenticationException
 import com.safelense.auth.application.InvalidRefreshTokenException
 import com.safelense.document.InvalidRegistryDocumentException
+import com.safelense.document.RegistryDocumentExpiredException
 import com.safelense.document.RegistryDocumentNotFoundException
 import com.safelense.document.RegistryDocumentTooLargeException
 import com.safelense.notification.InvalidNotificationRequestException
@@ -37,6 +38,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException
 data class ApiError(
     val code: String,
     val message: String,
+    val retryable: Boolean = false,
 )
 
 @RestControllerAdvice
@@ -123,6 +125,10 @@ class ApiExceptionHandler {
     fun handleRegistryDocumentNotFound(): ResponseEntity<ApiError> =
         error(HttpStatus.NOT_FOUND, "REGISTRY_DOCUMENT_NOT_FOUND", "Registry document was not found.")
 
+    @ExceptionHandler(RegistryDocumentExpiredException::class)
+    fun handleRegistryDocumentExpired(): ResponseEntity<ApiError> =
+        error(HttpStatus.GONE, "DOCUMENT_EXPIRED", "Registry document has expired.")
+
     @ExceptionHandler(InvalidNotificationRequestException::class)
     fun handleInvalidNotificationRequest(): ResponseEntity<ApiError> =
         error(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Request is invalid.")
@@ -143,6 +149,11 @@ class ApiExceptionHandler {
     fun handleInvalidRefreshToken(): ResponseEntity<ApiError> =
         error(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN", "Refresh token is invalid.")
 
-    private fun error(status: HttpStatus, code: String, message: String): ResponseEntity<ApiError> =
-        ResponseEntity.status(status).body(ApiError(code, message))
+    private fun error(
+        status: HttpStatus,
+        code: String,
+        message: String,
+        retryable: Boolean = false,
+    ): ResponseEntity<ApiError> =
+        ResponseEntity.status(status).body(ApiError(code, message, retryable))
 }

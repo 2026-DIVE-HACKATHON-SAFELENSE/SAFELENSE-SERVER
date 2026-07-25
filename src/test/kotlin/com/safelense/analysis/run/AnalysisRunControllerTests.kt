@@ -64,6 +64,21 @@ class AnalysisRunControllerTests {
         verify(service).status(1L, 3L)
     }
 
+    @Test
+    fun `returns analysis history for an owned property`() {
+        `when`(service.history(1L, 2L)).thenReturn(AnalysisRunHistoryView(listOf(view())))
+
+        mockMvc.perform(
+            get("/api/v1/properties/2/analyses")
+                .principal(authentication()),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.analyses[0].id").value(3))
+            .andExpect(jsonPath("$.analyses[0].retryable").value(false))
+
+        verify(service).history(1L, 2L)
+    }
+
     private fun view() =
         AnalysisRunView(
             id = 3L,
@@ -72,6 +87,7 @@ class AnalysisRunControllerTests {
             dataMode = AnalysisDataMode.DEMO,
             forceRefresh = true,
             failureCode = null,
+            retryable = false,
         )
 
     private fun authentication() = UsernamePasswordAuthenticationToken(1L, null)

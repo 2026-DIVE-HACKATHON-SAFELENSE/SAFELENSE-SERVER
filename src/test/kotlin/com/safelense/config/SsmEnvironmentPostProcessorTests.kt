@@ -34,9 +34,15 @@ class SsmEnvironmentPostProcessorTests {
         processor.postProcessEnvironment(environment, mock(SpringApplication::class.java))
 
         assertThat(readerFactoryCalls).isOne()
-        assertThat(reader.requests).containsExactly(SsmEnvironmentPostProcessor.parameterNames)
+        assertThat(reader.requests).containsExactly(
+            SsmEnvironmentPostProcessor.parameterNames.take(10),
+            SsmEnvironmentPostProcessor.parameterNames.drop(10),
+        )
         assertThat(environment.getProperty("DB_URL")).isEqualTo("jdbc:postgresql://example/db")
         assertThat(environment.getProperty("JWT_SECRET")).isEqualTo("secret")
+        assertThat(environment.getProperty("OPENAI_API_KEY")).isEqualTo("openai-secret")
+        assertThat(environment.getProperty("REGISTRY_DOCUMENT_BUCKET")).isEqualTo("registry-bucket")
+        assertThat(environment.getProperty("REGISTRY_DOCUMENT_KMS_KEY_ID")).isEqualTo("kms-key")
         assertThat(environment.propertySources.iterator().next().name).isEqualTo("ssmParameters")
     }
 
@@ -62,11 +68,15 @@ class SsmEnvironmentPostProcessorTests {
             "JWT_SECRET" to "secret",
             "JWT_ACCESS_TOKEN_TTL" to "PT30M",
             "JWT_REFRESH_TOKEN_TTL" to "P14D",
+            "OPENAI_API_KEY" to "openai-secret",
+            "REGISTRY_DOCUMENT_BUCKET" to "registry-bucket",
+            "REGISTRY_DOCUMENT_KMS_KEY_ID" to "kms-key",
         ).toMutableMap()
 
         override fun read(parameterNames: List<String>): Map<String, String> {
             requests += parameterNames
-            return values
+            val requestedKeys = parameterNames.map { it.substringAfterLast('/') }.toSet()
+            return values.filterKeys { it in requestedKeys }
         }
     }
 }

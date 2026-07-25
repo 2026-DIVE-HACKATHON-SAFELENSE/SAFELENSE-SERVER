@@ -102,3 +102,6 @@
 - 2026-07-26. 공식 OpenAI 문서의 현재 Responses API 계약에 따라 `store=false`와 엄격한 `text.format` JSON Schema를 사용하고 `output_text`만 파싱한다. 거부·HTTP 오류·구조 오류는 모델 결과로 취급하지 않으며 새 프로젝트 권장 기본 모델은 `gpt-5.6`으로 설정한다.
 - 2026-07-26. AI 요청에는 `evidence-{id}`, 정규화 값, 출처, 기준일, 상태, 규칙 결과와 비식별 사례만 포함한다. 서버는 존재하지 않는 근거 ID, 인용 근거에 없는 숫자, 단정적 법률 판단을 거절하고 규칙 요약·권고 문구로 대체한 뒤 실행을 `PARTIAL`로 종료한다.
 - 2026-07-26. 계약 의사결정 리포트는 실행별 `analysis_reports.report_json`에 한 번만 저장한다. 반복 생성과 조회는 최신 매물 상태를 다시 계산하지 않고 저장된 스냅샷을 사용하며 기존 과거 분석 결과 PDF와 새 계약 의사결정 PDF 경로를 모두 유지한다.
+- 2026-07-26. 운영 설정은 OpenAI 키·등기부 버킷·KMS 키를 SSM에서 추가 로드한다. 실행 이력은 `PARTIAL`·`FAILED` 재시도 가능 여부만 공개하고 내부 오류를 숨기며, 만료 작업은 S3 삭제 후 문서를 `EXPIRED`로 표시한다.
+- 2026-07-26. 코드 리뷰 수정 후 `./gradlew test --rerun-tasks`와 `./gradlew bootJar --rerun-tasks`가 `BUILD SUCCESSFUL`로 통과했다. `bootJar`는 Gradle 사용자 캐시 잠금이 샌드박스에서 차단되어 권한 확장 환경에서 실행했다.
+- 2026-07-26. 기존 결과와 새 실행의 숫자 ID 충돌은 기존 결과 우선과 `resultType=CONTRACT_DECISION` 구분자로 해소한다. SSM `GetParameters`는 AWS 제한에 맞춰 최대 10개씩 조회한다.

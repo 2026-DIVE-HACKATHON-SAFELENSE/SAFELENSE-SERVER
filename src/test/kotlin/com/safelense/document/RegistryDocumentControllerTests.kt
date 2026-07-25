@@ -6,6 +6,7 @@ import java.time.Instant
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.springframework.mock.web.MockMultipartFile
@@ -65,6 +66,21 @@ class RegistryDocumentControllerTests {
             .andExpect(status().isNoContent)
 
         verify(service).delete(1L, 2L, 3L)
+    }
+
+    @Test
+    fun `returns a terminal document expired error`() {
+        doThrow(RegistryDocumentExpiredException())
+            .`when`(service)
+            .delete(1L, 2L, 3L)
+
+        mockMvc.perform(
+            delete("/api/v1/properties/2/registry-documents/3")
+                .principal(authentication()),
+        )
+            .andExpect(status().isGone)
+            .andExpect(jsonPath("$.code").value("DOCUMENT_EXPIRED"))
+            .andExpect(jsonPath("$.retryable").value(false))
     }
 
     private fun authentication() = UsernamePasswordAuthenticationToken(1L, null)

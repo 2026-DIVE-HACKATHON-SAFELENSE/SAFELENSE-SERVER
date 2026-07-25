@@ -17,6 +17,11 @@ data class AnalysisRunView(
     val dataMode: AnalysisDataMode,
     val forceRefresh: Boolean,
     val failureCode: String?,
+    val retryable: Boolean = status == AnalysisRunStatus.PARTIAL || status == AnalysisRunStatus.FAILED,
+)
+
+data class AnalysisRunHistoryView(
+    val analyses: List<AnalysisRunView>,
 )
 
 @Service
@@ -54,6 +59,14 @@ class AnalysisRunService(
     fun status(userId: Long, analysisId: Long): AnalysisRunView =
         (runRepository.findByIdAndUserId(analysisId, userId) ?: throw AnalysisRunNotFoundException()).toView()
 
+    @Transactional(readOnly = true)
+    fun history(userId: Long, propertyId: Long): AnalysisRunHistoryView {
+        propertyRepository.findByIdAndUserId(propertyId, userId) ?: throw HomePropertyNotFoundException()
+        return AnalysisRunHistoryView(
+            runRepository.findAllByPropertyIdAndUserIdOrderByIdDesc(propertyId, userId).map { it.toView() },
+        )
+    }
+
     private fun AnalysisRun.toView() =
         AnalysisRunView(
             id = requireNotNull(id),
@@ -61,6 +74,7 @@ class AnalysisRunService(
             status = status,
             dataMode = dataMode,
             forceRefresh = forceRefresh,
-            failureCode = failureCode,
+            failureCode = if (status == AnalysisRunStatus.FAILED) "ANALYSIS_EXECUTION_FAILED" else null,
+            retryable = status == AnalysisRunStatus.PARTIAL || status == AnalysisRunStatus.FAILED,
         )
 }
