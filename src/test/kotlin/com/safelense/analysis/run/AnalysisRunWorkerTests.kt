@@ -8,6 +8,9 @@ import com.safelense.analysis.evidence.CollectedEvidence
 import com.safelense.analysis.evidence.CollectedEvidenceRepository
 import com.safelense.analysis.evidence.EvidenceStatus
 import com.safelense.analysis.extraction.RegistryExtractor
+import com.safelense.analysis.match.AnalysisCaseMatch
+import com.safelense.analysis.match.AnalysisCaseMatchRepository
+import com.safelense.analysis.match.ConsultationMatchResult
 import com.safelense.analysis.match.ConsultationCaseMatcher
 import com.safelense.analysis.match.MatchedCase
 import com.safelense.analysis.report.ContractDecisionReportGeneration
@@ -32,13 +35,15 @@ class AnalysisRunWorkerTests {
     private val propertyRepository = mock(HomePropertyRepository::class.java)
     private val documentRepository = mock(RegistryDocumentRepository::class.java)
     private val evidenceRepository = mock(CollectedEvidenceRepository::class.java)
+    private val matchRepository = mock(AnalysisCaseMatchRepository::class.java)
     private val persistedEvidence = mutableListOf<CollectedEvidence>()
+    private val persistedMatches = mutableListOf<AnalysisCaseMatch>()
     private val run = AnalysisRun(
         id = 3L,
         propertyId = 2L,
         userId = 1L,
         status = AnalysisRunStatus.QUEUED,
-        dataMode = AnalysisDataMode.DEMO,
+        dataMode = AnalysisDataMode.LIVE,
         idempotencyKey = "run-1",
         forceRefresh = false,
     )
@@ -53,6 +58,11 @@ class AnalysisRunWorkerTests {
             persistedEvidence += it.arguments[0] as List<CollectedEvidence>
             persistedEvidence
         }
+        `when`(matchRepository.saveAll(anyList<AnalysisCaseMatch>())).thenAnswer {
+            @Suppress("UNCHECKED_CAST")
+            persistedMatches += it.arguments[0] as List<AnalysisCaseMatch>
+            persistedMatches
+        }
         val collector = PropertyDataCollector {
             assertThat(run.status).isEqualTo(AnalysisRunStatus.COLLECTING)
             listOf(
@@ -64,15 +74,30 @@ class AnalysisRunWorkerTests {
             assertThat(run.status).isEqualTo(AnalysisRunStatus.EXTRACTING_DOCUMENT)
             listOf(evidence("REGISTRY_DOCUMENT", null, EvidenceStatus.NOT_AVAILABLE))
         }
-        val matcher = ConsultationCaseMatcher {
+        val matcher = ConsultationCaseMatcher { request ->
             assertThat(run.status).isEqualTo(AnalysisRunStatus.ANALYZING)
-            listOf(MatchedCase("DEMO-HUG-001", 0.82, "HIGH_DEPOSIT_RATIO", "비식별 상담 패턴"))
+            assertThat(request.assessment.confidence).isEqualTo(35)
+            ConsultationMatchResult(
+                listOf(
+                    MatchedCase(
+                        databaseId = 101L,
+                        caseId = "101",
+                        structuredScore = 0.8,
+                        semanticScore = 0.9,
+                        combinedScore = 0.845,
+                        pattern = "보증금반환 · 상담",
+                        summary = "비식별 상담 패턴",
+                    ),
+                ),
+                degraded = false,
+            )
         }
         val worker = AnalysisRunWorker(
             runRepository,
             propertyRepository,
             documentRepository,
             evidenceRepository,
+            matchRepository,
             collector,
             extractor,
             matcher,
@@ -91,6 +116,9 @@ class AnalysisRunWorkerTests {
         assertThat(run.status).isEqualTo(AnalysisRunStatus.PARTIAL)
         assertThat(persistedEvidence).hasSize(3)
         assertThat(persistedEvidence).allMatch { it.runId == 3L }
+        assertThat(persistedMatches).hasSize(1)
+        assertThat(persistedMatches.single().consultationCaseId).isEqualTo(101L)
+        assertThat(persistedMatches.single().rank).isEqualTo(1)
         assertThat(artifacts?.assessment?.confidence).isEqualTo(35)
         assertThat(artifacts?.matchedCases).hasSize(1)
     }
@@ -99,8 +127,8 @@ class AnalysisRunWorkerTests {
         CollectedEvidenceCommand(
             evidenceKey = key,
             valueJson = valueJson,
-            source = "DEMO",
-            sourceIdentifier = "demo-seed-2026-v1",
+            source = "LIVE_TEST",
+            sourceIdentifier = "fixture",
             asOf = Instant.parse("2026-07-01T00:00:00Z"),
             collectedAt = NOW,
             confidence = if (status == EvidenceStatus.AVAILABLE) 90 else 0,

@@ -8,7 +8,9 @@ import com.safelense.analysis.evidence.CollectedEvidence
 import com.safelense.analysis.evidence.CollectedEvidenceRepository
 import com.safelense.analysis.evidence.EvidenceStatus
 import com.safelense.analysis.extraction.RegistryExtractor
+import com.safelense.analysis.match.AnalysisCaseMatchRepository
 import com.safelense.analysis.match.ConsultationCaseMatcher
+import com.safelense.analysis.match.ConsultationMatchResult
 import com.safelense.analysis.report.AiInterpretationReport
 import com.safelense.analysis.report.ContractDecisionReportGeneration
 import com.safelense.analysis.report.ContractDecisionReportGenerator
@@ -34,6 +36,7 @@ class AnalysisRunReportFallbackTests {
         val propertyRepository = mock(HomePropertyRepository::class.java)
         val documentRepository = mock(RegistryDocumentRepository::class.java)
         val evidenceRepository = mock(CollectedEvidenceRepository::class.java)
+        val matchRepository = mock(AnalysisCaseMatchRepository::class.java)
         val run = AnalysisRun(
             id = 3L,
             propertyId = 2L,
@@ -67,9 +70,10 @@ class AnalysisRunReportFallbackTests {
             propertyRepository,
             documentRepository,
             evidenceRepository,
+            matchRepository,
             PropertyDataCollector { available },
             RegistryExtractor { listOf(evidence("REGISTRY_DOCUMENT", """{"extracted":true}""")) },
-            ConsultationCaseMatcher { emptyList() },
+            ConsultationCaseMatcher { ConsultationMatchResult(emptyList(), degraded = false) },
             AnalysisRiskRuleEngine(),
             ObjectMapper(),
             reportGenerator,
@@ -86,8 +90,8 @@ class AnalysisRunReportFallbackTests {
         CollectedEvidenceCommand(
             evidenceKey = key,
             valueJson = valueJson,
-            source = "DEMO",
-            sourceIdentifier = "demo-seed-2026-v1",
+            source = "LIVE_TEST",
+            sourceIdentifier = "fixture",
             asOf = NOW,
             collectedAt = NOW,
             confidence = 90,

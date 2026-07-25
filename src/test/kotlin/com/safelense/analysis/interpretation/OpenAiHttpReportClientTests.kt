@@ -57,7 +57,7 @@ class OpenAiHttpReportClientTests {
                     id = "evidence-11",
                     evidenceKey = "OFFICIAL_PRICE",
                     valueJson = """{"amount":50000}""",
-                    source = "DEMO",
+                    source = "VWORLD_OFFICIAL_PRICE",
                     asOf = null,
                     status = EvidenceStatus.AVAILABLE,
                 ),

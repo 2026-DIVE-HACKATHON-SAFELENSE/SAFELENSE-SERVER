@@ -59,7 +59,7 @@ class AnalysisRunService(
                 propertyId = propertyId,
                 userId = userId,
                 status = AnalysisRunStatus.QUEUED,
-                dataMode = AnalysisDataMode.DEMO,
+                dataMode = AnalysisDataMode.LIVE,
                 idempotencyKey = idempotencyKey,
                 forceRefresh = forceRefresh,
             ),

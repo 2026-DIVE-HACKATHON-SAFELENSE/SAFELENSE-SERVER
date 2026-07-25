@@ -48,8 +48,8 @@ class AnalysisRiskRuleEngineEvidenceTests {
         CollectedEvidenceCommand(
             evidenceKey = "OFFICIAL_PRICE",
             valueJson = """{"amount":50000,"unit":"TEN_THOUSAND_KRW"}""",
-            source = "DEMO",
-            sourceIdentifier = "demo-seed-2026-v1",
+            source = "VWORLD_OFFICIAL_PRICE",
+            sourceIdentifier = "getApartHousingPriceAttr",
             asOf = Instant.parse("2026-07-01T00:00:00Z"),
             collectedAt = Instant.parse("2026-07-26T00:00:00Z"),
             confidence = if (status == EvidenceStatus.AVAILABLE) 90 else 0,

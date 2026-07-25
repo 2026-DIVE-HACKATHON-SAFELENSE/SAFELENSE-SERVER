@@ -9,7 +9,9 @@ import com.safelense.analysis.interpretation.OpenAiProperties
 import com.safelense.analysis.interpretation.OpenAiReportClient
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
 import com.safelense.analysis.interpretation.ReportEvidenceValidator
-import com.safelense.analysis.match.DemoConsultationCaseMatcher
+import com.safelense.analysis.match.AnalysisCaseMatchRepository
+import com.safelense.analysis.match.ConsultationCaseMatcher
+import com.safelense.analysis.match.ConsultationMatchResult
 import com.safelense.analysis.report.AnalysisReport
 import com.safelense.analysis.report.AnalysisReportRepository
 import com.safelense.analysis.report.ContractDecisionReportService
@@ -45,6 +47,7 @@ class ContractDecisionEndToEndTests {
         val propertyRepository = mock(HomePropertyRepository::class.java)
         val documentRepository = mock(RegistryDocumentRepository::class.java)
         val evidenceRepository = mock(CollectedEvidenceRepository::class.java)
+        val matchRepository = mock(AnalysisCaseMatchRepository::class.java)
         val reportRepository = mock(AnalysisReportRepository::class.java)
         val property = property()
         val runs = mutableMapOf(
@@ -97,11 +100,12 @@ class ContractDecisionEndToEndTests {
             propertyRepository,
             documentRepository,
             evidenceRepository,
+            matchRepository,
             PropertyDataCollector {
                 throw IllegalStateException("OPENAI_API_KEY unavailable for ${it.address}")
             },
             RegistryDocumentStatusExtractor(clock),
-            DemoConsultationCaseMatcher(),
+            ConsultationCaseMatcher { ConsultationMatchResult(emptyList(), degraded = false) },
             AnalysisRiskRuleEngine(),
             objectMapper,
             reportService,

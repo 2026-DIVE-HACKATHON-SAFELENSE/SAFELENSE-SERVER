@@ -55,6 +55,18 @@ data class DataCoverageItem(
     var asOf: String? = null,
 )
 
+@Schema(description = "실제 비식별 상담 데이터에서 검색한 유사 사례")
+data class SimilarCaseReport(
+    @field:Schema(description = "상담 데이터셋의 비식별 사례 ID")
+    var caseId: String = "",
+    @field:Schema(description = "구조화 조건과 의미 검색의 결합 유사도", example = "0.845")
+    var similarity: Double = 0.0,
+    @field:Schema(description = "일반화된 분쟁 유형과 진행 단계")
+    var pattern: String = "",
+    @field:Schema(description = "원문을 노출하지 않는 일반화 사례 설명")
+    var summary: String = "",
+)
+
 @Schema(description = "근거 기반 계약 의사결정 리포트")
 data class ContractDecisionReportView(
     @field:Schema(description = "계약 안전성 점수와 위험 신호")
@@ -65,6 +77,8 @@ data class ContractDecisionReportView(
     var aiInterpretation: AiInterpretationReport = AiInterpretationReport(),
     @field:Schema(description = "계약 전 확인할 행동 가이드")
     var actionGuide: List<EvidenceBackedStatement> = emptyList(),
+    @field:Schema(description = "실제 비식별 상담 데이터에서 검색한 유사 사례")
+    var similarCases: List<SimilarCaseReport> = emptyList(),
     @field:Schema(description = "근거별 수집 상태와 출처")
     var dataCoverage: List<DataCoverageItem> = emptyList(),
     @field:Schema(description = "리포트에 사용된 데이터 모드", example = "DEMO")
@@ -126,6 +140,14 @@ class ContractDecisionReportService(
                 fallback = interpreted.fallback,
             ),
             actionGuide = interpreted.result.actionGuide,
+            similarCases = matchedCases.map {
+                SimilarCaseReport(
+                    caseId = it.caseId,
+                    similarity = it.combinedScore,
+                    pattern = it.pattern,
+                    summary = it.summary,
+                )
+            },
             dataCoverage = evidence.map {
                 DataCoverageItem(it.evidenceKey, it.status, it.source, it.asOf?.toString())
             },

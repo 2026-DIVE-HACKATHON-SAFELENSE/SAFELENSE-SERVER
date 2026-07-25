@@ -12,6 +12,7 @@ import com.safelense.analysis.interpretation.OpenAiReportClient
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
 import com.safelense.analysis.interpretation.OpenAiReportRequest
 import com.safelense.analysis.interpretation.ReportEvidenceValidator
+import com.safelense.analysis.match.MatchedCase
 import com.safelense.analysis.run.AnalysisDataMode
 import com.safelense.analysis.run.AnalysisRun
 import com.safelense.analysis.run.AnalysisRunNotFoundException
@@ -58,7 +59,7 @@ class ContractDecisionReportServiceTests {
         assertThat(first.created).isTrue()
         assertThat(first.view.dataMode).isEqualTo(AnalysisDataMode.DEMO)
         assertThat(first.view.contractSafety.grade).isEqualTo(AnalysisRiskGrade.UNKNOWN)
-        assertThat(first.view.dataCoverage.single().source).isEqualTo("DEMO")
+        assertThat(first.view.dataCoverage.single().source).isEqualTo("VWORLD_OFFICIAL_PRICE")
         assertThat(repeated.created).isFalse()
         assertThat(repeated.view.aiInterpretation.summary.text)
             .isEqualTo(first.view.aiInterpretation.summary.text)
@@ -74,13 +75,49 @@ class ContractDecisionReportServiceTests {
             .isInstanceOf(AnalysisRunNotFoundException::class.java)
     }
 
-    private fun run() =
+    @Test
+    fun `includes snapshotted similar cases in a live report`() {
+        var stored: AnalysisReport? = null
+        `when`(reportRepository.findByRunId(3L)).thenAnswer { stored }
+        `when`(reportRepository.save(any(AnalysisReport::class.java))).thenAnswer {
+            (it.arguments[0] as AnalysisReport).also { report -> stored = report }
+        }
+        val matchedCase = MatchedCase(
+            databaseId = 101L,
+            caseId = "101",
+            structuredScore = 0.8,
+            semanticScore = 0.9,
+            combinedScore = 0.845,
+            pattern = "보증금반환 · 상담",
+            summary = "아파트 보증금반환 유사 사례입니다.",
+        )
+
+        val generated = service.generate(
+            run(AnalysisDataMode.LIVE),
+            listOf(evidence()),
+            listOf(matchedCase),
+            assessment(),
+        )
+
+        assertThat(generated.view.dataMode).isEqualTo(AnalysisDataMode.LIVE)
+        assertThat(generated.view.similarCases).containsExactly(
+            SimilarCaseReport(
+                caseId = "101",
+                similarity = 0.845,
+                pattern = "보증금반환 · 상담",
+                summary = "아파트 보증금반환 유사 사례입니다.",
+            ),
+        )
+        assertThat(stored?.reportJson).contains("\"similarCases\"")
+    }
+
+    private fun run(dataMode: AnalysisDataMode = AnalysisDataMode.DEMO) =
         AnalysisRun(
             id = 3L,
             propertyId = 2L,
             userId = 1L,
             status = AnalysisRunStatus.COMPLETED,
-            dataMode = AnalysisDataMode.DEMO,
+            dataMode = dataMode,
             idempotencyKey = "run-1",
             forceRefresh = false,
             completedAt = NOW,
@@ -92,8 +129,8 @@ class ContractDecisionReportServiceTests {
             runId = 3L,
             evidenceKey = "OFFICIAL_PRICE",
             valueJson = """{"amount":50000}""",
-            source = "DEMO",
-            sourceIdentifier = "demo-seed-2026-v1",
+            source = "VWORLD_OFFICIAL_PRICE",
+            sourceIdentifier = "getApartHousingPriceAttr",
             asOf = Instant.parse("2026-07-01T00:00:00Z"),
             collectedAt = NOW,
             confidence = 90,

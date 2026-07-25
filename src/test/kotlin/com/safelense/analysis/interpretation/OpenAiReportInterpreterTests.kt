@@ -52,14 +52,40 @@ class OpenAiReportInterpreterTests {
         assertThat(interpreted.result.summary.evidenceIds).containsExactly("evidence-11")
     }
 
+    @Test
+    fun `accepts a statement cited by a matched consultation case`() {
+        val client = RecordingOpenAiReportClient(
+            result = AiReportResult(
+                summary = EvidenceBackedStatement("유사 상담 사례를 확인하세요.", listOf("case-101")),
+                residentialImpacts = emptyList(),
+                actionGuide = emptyList(),
+            ),
+        )
+        val interpreter = OpenAiReportInterpreter(client, ReportEvidenceValidator(), properties)
+        val matched = MatchedCase(
+            databaseId = 101L,
+            caseId = "101",
+            structuredScore = 0.8,
+            semanticScore = 0.9,
+            combinedScore = 0.845,
+            pattern = "보증금반환 · 상담",
+            summary = "아파트 보증금반환 유사 사례입니다.",
+        )
+
+        val interpreted = interpreter.interpret(listOf(evidence()), assessment(), listOf(matched))
+
+        assertThat(interpreted.fallback).isFalse()
+        assertThat(interpreted.result.summary.evidenceIds).containsExactly("case-101")
+    }
+
     private fun evidence() =
         CollectedEvidence(
             id = 11L,
             runId = 3L,
             evidenceKey = "OFFICIAL_PRICE",
             valueJson = """{"amount":50000}""",
-            source = "DEMO",
-            sourceIdentifier = "demo-seed-2026-v1",
+            source = "VWORLD_OFFICIAL_PRICE",
+            sourceIdentifier = "getApartHousingPriceAttr",
             asOf = Instant.parse("2026-07-01T00:00:00Z"),
             collectedAt = Instant.parse("2026-07-26T00:00:00Z"),
             confidence = 90,
@@ -78,7 +104,7 @@ class OpenAiReportInterpreterTests {
         )
 
     private fun cases() =
-        listOf(MatchedCase("DEMO-HUG-001", 0.82, "HIGH_DEPOSIT_RATIO", "비식별 상담 패턴"))
+        listOf(MatchedCase("101", 0.82, "보증금반환 · 상담", "비식별 상담 패턴"))
 }
 
 private class RecordingOpenAiReportClient(

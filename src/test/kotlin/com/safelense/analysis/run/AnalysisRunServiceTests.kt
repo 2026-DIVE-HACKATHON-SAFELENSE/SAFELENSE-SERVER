@@ -19,7 +19,7 @@ class AnalysisRunServiceTests {
     private val service = AnalysisRunService(propertyRepository, runRepository)
 
     @Test
-    fun `creates one queued demo run for the same idempotency key`() {
+    fun `creates one queued live run for the same idempotency key`() {
         var stored: AnalysisRun? = null
         `when`(propertyRepository.findByIdAndUserId(2L, 1L)).thenReturn(property())
         `when`(runRepository.findByPropertyIdAndIdempotencyKey(2L, "run-1")).thenAnswer { stored }
@@ -32,7 +32,7 @@ class AnalysisRunServiceTests {
 
         assertThat(first.id).isEqualTo(3L)
         assertThat(first.status).isEqualTo(AnalysisRunStatus.QUEUED)
-        assertThat(first.dataMode).isEqualTo(AnalysisDataMode.DEMO)
+        assertThat(first.dataMode).isEqualTo(AnalysisDataMode.LIVE)
         assertThat(repeated.id).isEqualTo(first.id)
         verify(runRepository, times(1)).saveAndFlush(any(AnalysisRun::class.java))
     }

@@ -10,6 +10,10 @@ import com.safelense.analysis.evidence.CollectedEvidenceRepository
 import com.safelense.analysis.evidence.EvidenceStatus
 import com.safelense.analysis.extraction.RegistryExtractor
 import com.safelense.analysis.match.ConsultationCaseMatcher
+import com.safelense.analysis.match.ConsultationMatchRequest
+import com.safelense.analysis.match.ConsultationMatchResult
+import com.safelense.analysis.match.AnalysisCaseMatch
+import com.safelense.analysis.match.AnalysisCaseMatchRepository
 import com.safelense.analysis.match.MatchedCase
 import com.safelense.analysis.report.ContractDecisionReportGenerator
 import com.safelense.document.RegistryDocumentRepository
@@ -35,6 +39,7 @@ class AnalysisRunWorker(
     private val propertyRepository: HomePropertyRepository,
     private val documentRepository: RegistryDocumentRepository,
     private val evidenceRepository: CollectedEvidenceRepository,
+    private val matchRepository: AnalysisCaseMatchRepository,
     private val collector: PropertyDataCollector,
     private val extractor: RegistryExtractor,
     private val matcher: ConsultationCaseMatcher,
@@ -86,13 +91,28 @@ class AnalysisRunWorker(
                 .toList()
 
             run.status = AnalysisRunStatus.ANALYZING
-            val matchedCases = try {
-                matcher.match(evidence)
-            } catch (_: Exception) {
-                providerUnavailable = true
-                emptyList()
-            }
             val assessment = ruleEngine.assess(property, evidence, objectMapper)
+            val matchResult = try {
+                matcher.match(ConsultationMatchRequest(property, evidence, assessment))
+            } catch (_: Exception) {
+                ConsultationMatchResult(emptyList(), degraded = true)
+            }
+            providerUnavailable = providerUnavailable || matchResult.degraded
+            val matchedCases = matchResult.cases
+            matchRepository.saveAll(
+                matchedCases.mapIndexed { index, match ->
+                    AnalysisCaseMatch(
+                        runId = requireNotNull(run.id),
+                        consultationCaseId = match.databaseId,
+                        rank = index + 1,
+                        structuredScore = match.structuredScore,
+                        semanticScore = match.semanticScore,
+                        combinedScore = match.combinedScore,
+                        pattern = match.pattern,
+                        summary = match.summary,
+                    )
+                },
+            )
             val report = reportGenerator.generate(run, persistedEvidence, matchedCases, assessment)
 
             val hasUnavailableEvidence = evidence.any {
@@ -121,7 +141,7 @@ class AnalysisRunWorker(
         CollectedEvidenceCommand(
             evidenceKey = evidenceKey,
             valueJson = null,
-            source = "DEMO",
+            source = "PUBLIC_DATA_COLLECTION",
             sourceIdentifier = null,
             asOf = null,
             collectedAt = collectedAt,

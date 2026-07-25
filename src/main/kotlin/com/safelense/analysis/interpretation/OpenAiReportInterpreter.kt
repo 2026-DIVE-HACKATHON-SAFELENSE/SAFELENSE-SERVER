@@ -54,7 +54,10 @@ class OpenAiReportInterpreter(
                 status = item.status,
             )
         }
-        val evidenceValues = facts.associate { it.id to it.valueJson }
+        val evidenceValues = facts.associate { it.id to it.valueJson } +
+            matchedCases.associate {
+                "case-${it.caseId}" to "${it.pattern} ${it.summary}"
+            }
         return try {
             val result = client.generate(OpenAiReportRequest(facts, assessment, matchedCases))
             validator.validate(result, evidenceValues)
