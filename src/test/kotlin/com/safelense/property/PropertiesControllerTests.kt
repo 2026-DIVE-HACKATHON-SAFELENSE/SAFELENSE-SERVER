@@ -9,6 +9,7 @@ import org.mockito.Mockito.`when`
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -74,6 +75,34 @@ class PropertiesControllerTests {
             .andExpect(jsonPath("$.property.id").value(1))
 
         verify(service).get(7L, 1L)
+    }
+
+    @Test
+    fun `patches a candidate property by its id`() {
+        val service = mock(HomePropertyService::class.java)
+        `when`(service.patch(7L, 1L, HomePropertyPatchCommand(depositAmount = FieldPatch.Set(22000L))))
+            .thenReturn(property())
+        val mockMvc = MockMvcBuilders.standaloneSetup(PropertiesController(service)).setControllerAdvice(ApiExceptionHandler()).build()
+
+        mockMvc.perform(
+            patch("/api/v1/properties/1")
+                .principal(UsernamePasswordAuthenticationToken(7L, null))
+                .contentType("application/merge-patch+json")
+                .content("""{"depositAmount":22000}"""),
+        ).andExpect(status().isOk)
+    }
+
+    @Test
+    fun `patches address and clears landlord for a candidate property`() {
+        val service = mock(HomePropertyService::class.java)
+        val command = HomePropertyPatchCommand(address = FieldPatch.Set("새 주소"), landlordName = FieldPatch.Clear)
+        `when`(service.patch(7L, 1L, command)).thenReturn(property())
+        val mockMvc = MockMvcBuilders.standaloneSetup(PropertiesController(service)).setControllerAdvice(ApiExceptionHandler()).build()
+
+        mockMvc.perform(
+            patch("/api/v1/properties/1").principal(UsernamePasswordAuthenticationToken(7L, null))
+                .contentType("application/merge-patch+json").content("""{"address":"새 주소","landlordName":null}"""),
+        ).andExpect(status().isOk)
     }
 
     private fun property() = HomeProperty(1L, 7L, "서울시 중구 1", 20000, BuildingType.APARTMENT)

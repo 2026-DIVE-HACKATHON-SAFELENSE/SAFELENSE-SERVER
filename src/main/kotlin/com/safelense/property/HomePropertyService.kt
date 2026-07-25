@@ -65,7 +65,16 @@ class HomePropertyService(
     @Transactional
     fun patch(userId: Long, command: HomePropertyPatchCommand): HomeProperty {
         val property = homePropertyRepository.findByUserId(userId) ?: throw HomePropertyNotFoundException()
+        return patch(property, command)
+    }
 
+    @Transactional
+    fun patch(userId: Long, propertyId: Long, command: HomePropertyPatchCommand): HomeProperty {
+        val property = homePropertyRepository.findByIdAndUserId(propertyId, userId) ?: throw HomePropertyNotFoundException()
+        return patch(property, command)
+    }
+
+    private fun patch(property: HomeProperty, command: HomePropertyPatchCommand): HomeProperty {
         property.address = command.address.requiredValueOr(property.address)
         property.depositAmount = command.depositAmount.requiredValueOr(property.depositAmount)
         property.buildingType = command.buildingType.requiredValueOr(property.buildingType)
