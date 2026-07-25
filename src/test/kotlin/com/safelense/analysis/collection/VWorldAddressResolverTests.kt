@@ -66,6 +66,23 @@ class VWorldAddressResolverTests {
     }
 
     @Test
+    fun `selects the exact road address from multiple search results`() {
+        val builder = RestClient.builder()
+        val server = MockRestServiceServer.bindTo(builder).build()
+        val resolver = VWorldAddressResolver(
+            builder,
+            VWorldProperties("vworld-key", searchBaseUrl = "https://vworld.test/req/search"),
+        )
+        server.expect(requestTo(org.hamcrest.Matchers.containsString("size=100")))
+            .andRespond(withSuccess(MULTIPLE_ADDRESS_RESPONSE, MediaType.APPLICATION_JSON))
+
+        val result = resolver.resolve("서울 중구 세종대로 110")
+
+        assertThat(result?.pnu).isEqualTo("1114010300100310000")
+        server.verify()
+    }
+
+    @Test
     fun `keeps a multi level city district and selects the legal dong before the lot`() {
         val builder = RestClient.builder()
         val server = MockRestServiceServer.bindTo(builder).build()
@@ -140,6 +157,35 @@ class VWorldAddressResolverTests {
     }
 
     companion object {
+        private val MULTIPLE_ADDRESS_RESPONSE = """
+            {
+              "response": {
+                "status": "OK",
+                "record": {"total": "2"},
+                "result": {
+                  "items": [
+                    {
+                      "id": "1114010300109990000",
+                      "address": {
+                        "parcel": "서울특별시 중구 태평로1가 999",
+                        "road": "서울특별시 중구 세종대로 99"
+                      },
+                      "point": {"x": "126.9", "y": "37.5"}
+                    },
+                    {
+                      "id": "1114010300100310000",
+                      "address": {
+                        "parcel": "서울특별시 중구 태평로1가 31",
+                        "road": "서울특별시 중구 세종대로 110"
+                      },
+                      "point": {"x": "126.977829", "y": "37.566317"}
+                    }
+                  ]
+                }
+              }
+            }
+        """.trimIndent()
+
         private val SINGLE_ADDRESS_RESPONSE = """
             {
               "response": {

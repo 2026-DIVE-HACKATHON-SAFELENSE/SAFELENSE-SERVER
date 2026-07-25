@@ -20,9 +20,11 @@ class VWorldAddressResolver(
         if (address.isBlank()) {
             return null
         }
-        val road = search(address.trim(), "road")
-        val selected = if (road.total == 0) search(address.trim(), "parcel") else road
-        val item = selected.takeIf { it.total == 1 }?.item ?: run {
+        val input = address.trim()
+        val road = search(input, "road")
+        val category = if (road.total == 0) "parcel" else "road"
+        val selected = if (category == "parcel") search(input, category) else road
+        val item = selected.items.singleOrNull { it.matchesAddress(input, category) } ?: run {
             logger.warn(
                 "VWorld address resolution failed. roadTotal={}, selectedTotal={}",
                 road.total,
@@ -43,7 +45,7 @@ class VWorldAddressResolver(
             .queryParam("request", "search")
             .queryParam("version", "2.0")
             .queryParam("crs", "EPSG:4326")
-            .queryParam("size", 2)
+            .queryParam("size", 100)
             .queryParam("page", 1)
             .queryParam("query", address)
             .queryParam("type", "address")
@@ -62,25 +64,25 @@ class VWorldAddressResolver(
                 category,
                 exception.statusCode.value(),
             )
-            return SearchResult(-1, null)
+            return SearchResult(-1, emptyList())
         } catch (exception: RestClientException) {
             logger.warn(
                 "VWorld address search failed. category={}, reason={}",
                 category,
                 exception.javaClass.simpleName,
             )
-            return SearchResult(-1, null)
+            return SearchResult(-1, emptyList())
         } ?: run {
             logger.warn("VWorld address search failed. category={}, reason=EMPTY_RESPONSE", category)
-            return SearchResult(-1, null)
+            return SearchResult(-1, emptyList())
         }
         val response = root.get("response") ?: run {
             logger.warn("VWorld address search failed. category={}, reason=MISSING_RESPONSE", category)
-            return SearchResult(-1, null)
+            return SearchResult(-1, emptyList())
         }
         val status = response.get("status")?.asString()
         if (status == "NOT_FOUND") {
-            return SearchResult(0, null)
+            return SearchResult(0, emptyList())
         }
         if (status != "OK") {
             val code = response.get("error")?.get("code")?.asString() ?: "UNKNOWN"
@@ -90,22 +92,27 @@ class VWorldAddressResolver(
                 status ?: "MISSING",
                 code,
             )
-            return SearchResult(-1, null)
+            return SearchResult(-1, emptyList())
         }
         val total = response.get("record")?.get("total")?.asString()?.toIntOrNull()
             ?: run {
                 logger.warn("VWorld address search failed. category={}, reason=MISSING_TOTAL", category)
-                return SearchResult(-1, null)
+                return SearchResult(-1, emptyList())
             }
-        val item = response.get("result")?.get("items")?.values()?.singleOrNull()
-        if (total != 1 || item == null) {
+        val items = response.get("result")?.get("items")?.values()?.toList().orEmpty()
+        if (total > 0 && items.isEmpty()) {
             logger.warn(
-                "VWorld address search failed. category={}, reason=NON_UNIQUE_RESULT, total={}",
+                "VWorld address search failed. category={}, reason=MISSING_ITEMS, total={}",
                 category,
                 total,
             )
         }
-        return SearchResult(total, item)
+        return SearchResult(total, items)
+    }
+
+    private fun JsonNode.matchesAddress(input: String, category: String): Boolean {
+        val candidate = get("address")?.get(category)?.asString()?.trim() ?: return false
+        return candidate == input || candidate.substringAfter(' ') == input.substringAfter(' ')
     }
 
     private fun JsonNode.toResolvedAddress(): ResolvedPropertyAddress? {
@@ -147,7 +154,7 @@ class VWorldAddressResolver(
 
     private data class SearchResult(
         val total: Int,
-        val item: JsonNode?,
+        val items: List<JsonNode>,
     )
 
     companion object {
