@@ -130,18 +130,32 @@ class VWorldAddressResolver(
         val pnu = get("id")?.asString()?.takeIf { it.length == 19 } ?: return null
         val parcelParts = get("address")?.get("parcel")?.asString()?.trim()?.split(Regex("\\s+"))
             ?: return null
-        if (parcelParts.size < 3) {
-            return null
-        }
-        val legalDongIndex =
-            if (parcelParts[parcelParts.lastIndex - 1] == "산") {
-                parcelParts.lastIndex - 2
+        val (province, district, legalDong) =
+            if (parcelParts.first().endsWith("시") || parcelParts.first().endsWith("도")) {
+                val legalDongIndex =
+                    if (parcelParts[parcelParts.lastIndex - 1] == "산") {
+                        parcelParts.lastIndex - 2
+                    } else {
+                        parcelParts.lastIndex - 1
+                    }
+                if (legalDongIndex < 1) return null
+                Triple(
+                    parcelParts[0],
+                    parcelParts.subList(1, legalDongIndex).joinToString(" "),
+                    parcelParts[legalDongIndex],
+                )
             } else {
-                parcelParts.lastIndex - 1
+                val roadParts = get("address")?.get("road")?.asString()
+                    ?.normalizedAddress()
+                    ?.split(WHITESPACE)
+                    ?: return null
+                if (parcelParts.size < 2 || roadParts.size < 4) return null
+                Triple(
+                    roadParts[0],
+                    roadParts.subList(1, roadParts.size - 2).joinToString(" "),
+                    parcelParts[0],
+                )
             }
-        if (legalDongIndex < 1) {
-            return null
-        }
         val pnuLandCode = pnu.substring(10, 11)
         val platGbCode = when (pnuLandCode) {
             "1" -> "0"
@@ -155,9 +169,9 @@ class VWorldAddressResolver(
             platGbCode = platGbCode,
             bun = pnu.substring(11, 15),
             ji = pnu.substring(15, 19),
-            province = parcelParts[0],
-            district = parcelParts.subList(1, legalDongIndex).joinToString(" "),
-            legalDong = parcelParts[legalDongIndex],
+            province = province,
+            district = district,
+            legalDong = legalDong,
             longitude = get("point")?.get("x")?.asString()?.toDoubleOrNull() ?: return null,
             latitude = get("point")?.get("y")?.asString()?.toDoubleOrNull() ?: return null,
         )
