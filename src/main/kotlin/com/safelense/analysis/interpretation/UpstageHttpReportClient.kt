@@ -111,6 +111,7 @@ class UpstageHttpReportClient(
                 "evidenceIds" to mapOf(
                     "type" to "array",
                     "items" to mapOf("type" to "string"),
+                    "minItems" to 1,
                 ),
             ),
             "required" to listOf("text", "evidenceIds"),

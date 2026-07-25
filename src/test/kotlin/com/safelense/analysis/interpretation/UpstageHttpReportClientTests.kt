@@ -49,6 +49,7 @@ class UpstageHttpReportClientTests {
             .andExpect(content().string(containsString("\"response_format\"")))
             .andExpect(content().string(containsString("\"type\":\"json_schema\"")))
             .andExpect(content().string(containsString("\"strict\":true")))
+            .andExpect(content().string(containsString("\"minItems\":1")))
             .andExpect(content().string(containsString("\"attentionLevel\"")))
             .andExpect(content().string(containsString("\"mitigationStatus\"")))
             .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON))
