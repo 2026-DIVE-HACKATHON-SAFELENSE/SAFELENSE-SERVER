@@ -41,11 +41,12 @@ class OpenAiReportInterpreter(
     private val properties: UpstageProperties,
 ) {
     fun interpret(
+        depositAmountManwon: Long,
         evidence: List<CollectedEvidence>,
         assessment: AnalysisRiskAssessment,
         matchedCases: List<MatchedCase>,
     ): InterpretedReport {
-        val facts = evidence.map { item ->
+        val evidenceFacts = evidence.map { item ->
             AiEvidenceFact(
                 id = item.evidenceId(),
                 evidenceKey = item.evidenceKey,
@@ -55,6 +56,16 @@ class OpenAiReportInterpreter(
                 status = item.status,
             )
         }
+        val facts = listOf(
+            AiEvidenceFact(
+                id = "evidence-deposit",
+                evidenceKey = "DEPOSIT_AMOUNT",
+                valueJson = """{"amount":$depositAmountManwon,"unit":"MANWON"}""",
+                source = "USER_INPUT",
+                asOf = null,
+                status = EvidenceStatus.AVAILABLE,
+            ),
+        ) + evidenceFacts
         val evidenceValues = facts.associate { it.id to it.valueJson } +
             matchedCases.associate {
                 "case-${it.caseId}" to "${it.pattern} ${it.summary}"
@@ -70,7 +81,7 @@ class OpenAiReportInterpreter(
                 else -> exception.javaClass.simpleName
             }
             logger.warn("Upstage report fallback. reason={}", reason)
-            val evidenceIds = facts
+            val evidenceIds = evidenceFacts
                 .filter { it.status == EvidenceStatus.AVAILABLE }
                 .map { it.id }
             InterpretedReport(

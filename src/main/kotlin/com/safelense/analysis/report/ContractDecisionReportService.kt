@@ -103,6 +103,7 @@ data class ContractDecisionReportGeneration(
 fun interface ContractDecisionReportGenerator {
     fun generate(
         run: AnalysisRun,
+        depositAmountManwon: Long,
         evidence: List<CollectedEvidence>,
         matchedCases: List<MatchedCase>,
         assessment: AnalysisRiskAssessment,
@@ -120,6 +121,7 @@ class ContractDecisionReportService(
     @Transactional
     override fun generate(
         run: AnalysisRun,
+        depositAmountManwon: Long,
         evidence: List<CollectedEvidence>,
         matchedCases: List<MatchedCase>,
         assessment: AnalysisRiskAssessment,
@@ -128,7 +130,7 @@ class ContractDecisionReportService(
         reportRepository.findByRunId(runId)?.let {
             return ContractDecisionReportGeneration(decode(it.reportJson), false)
         }
-        val interpreted = interpreter.interpret(evidence, assessment, matchedCases)
+        val interpreted = interpreter.interpret(depositAmountManwon, evidence, assessment, matchedCases)
         val availableIds = evidence
             .filter { it.status == EvidenceStatus.AVAILABLE }
             .map { "evidence-${requireNotNull(it.id)}" }

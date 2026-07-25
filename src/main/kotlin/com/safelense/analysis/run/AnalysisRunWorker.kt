@@ -114,7 +114,13 @@ class AnalysisRunWorker(
                     )
                 },
             )
-            val report = reportGenerator.generate(run, persistedEvidence, matchedCases, assessment)
+            val report = reportGenerator.generate(
+                run,
+                property.depositAmount,
+                persistedEvidence,
+                matchedCases,
+                assessment,
+            )
 
             val hasUnavailableEvidence = evidence.any {
                 it.status == EvidenceStatus.UNAVAILABLE ||

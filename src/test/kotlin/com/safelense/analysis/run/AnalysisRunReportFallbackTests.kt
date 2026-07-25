@@ -54,7 +54,7 @@ class AnalysisRunReportFallbackTests {
             (it.arguments[0] as List<CollectedEvidence>).onEachIndexed { index, item -> item.id = index + 1L }
         }
         var reportCalls = 0
-        val reportGenerator = ContractDecisionReportGenerator { _, evidence, _, _ ->
+        val reportGenerator = ContractDecisionReportGenerator { _, _, evidence, _, _ ->
             reportCalls += 1
             assertThat(evidence).allMatch { it.id != null }
             ContractDecisionReportGeneration(

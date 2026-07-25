@@ -103,7 +103,8 @@ class AnalysisRunWorkerTests {
             matcher,
             AnalysisRiskRuleEngine(),
             ObjectMapper(),
-            ContractDecisionReportGenerator { _, _, _, _ ->
+            ContractDecisionReportGenerator { _, depositAmountManwon, _, _, _ ->
+                assertThat(depositAmountManwon).isEqualTo(20_000L)
                 ContractDecisionReportGeneration(ContractDecisionReportView(), created = true)
             },
             Clock.fixed(NOW, ZoneOffset.UTC),

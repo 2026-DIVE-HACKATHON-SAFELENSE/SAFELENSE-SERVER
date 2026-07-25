@@ -32,11 +32,16 @@ class OpenAiReportInterpreterTests {
         )
         val interpreter = OpenAiReportInterpreter(client, ReportEvidenceValidator(), properties)
 
-        val interpreted = interpreter.interpret(listOf(evidence()), assessment(), cases())
+        val interpreted = interpreter.interpret(50_000L, listOf(evidence()), assessment(), cases())
 
         assertThat(interpreted.fallback).isFalse()
         assertThat(interpreted.model).isEqualTo("solar-pro3")
-        val fact = client.requests.single().facts.single()
+        val request = client.requests.single()
+        val depositFact = request.facts.first { it.evidenceKey == "DEPOSIT_AMOUNT" }
+        assertThat(depositFact.id).isEqualTo("evidence-deposit")
+        assertThat(depositFact.valueJson).isEqualTo("""{"amount":50000,"unit":"MANWON"}""")
+        assertThat(depositFact.source).isEqualTo("USER_INPUT")
+        val fact = request.facts.first { it.evidenceKey == "OFFICIAL_PRICE" }
         assertThat(fact.id).isEqualTo("evidence-11")
         assertThat(fact.evidenceKey).isEqualTo("OFFICIAL_PRICE")
         assertThat(fact.valueJson).contains("50000")
@@ -49,7 +54,7 @@ class OpenAiReportInterpreterTests {
         val client = OpenAiReportClient { throw IllegalStateException("unavailable") }
         val interpreter = OpenAiReportInterpreter(client, ReportEvidenceValidator(), properties)
 
-        val interpreted = interpreter.interpret(listOf(evidence()), assessment(), cases())
+        val interpreted = interpreter.interpret(50_000L, listOf(evidence()), assessment(), cases())
 
         assertThat(interpreted.fallback).isTrue()
         assertThat(interpreted.result.summary.text).isEqualTo("규칙 요약")
@@ -78,7 +83,7 @@ class OpenAiReportInterpreterTests {
             summary = "아파트 보증금반환 유사 사례입니다.",
         )
 
-        val interpreted = interpreter.interpret(listOf(evidence()), assessment(), listOf(matched))
+        val interpreted = interpreter.interpret(50_000L, listOf(evidence()), assessment(), listOf(matched))
 
         assertThat(interpreted.fallback).isFalse()
         assertThat(interpreted.result.summary.evidenceIds).containsExactly("case-101")
@@ -93,7 +98,7 @@ class OpenAiReportInterpreterTests {
         )
         val interpreter = OpenAiReportInterpreter(client, ReportEvidenceValidator(), properties)
 
-        val interpreted = interpreter.interpret(listOf(evidence()), assessment(), cases())
+        val interpreted = interpreter.interpret(50_000L, listOf(evidence()), assessment(), cases())
 
         assertThat(interpreted.fallback).isTrue()
         assertThat(output.all)

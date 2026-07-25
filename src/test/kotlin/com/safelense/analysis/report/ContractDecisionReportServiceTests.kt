@@ -56,8 +56,8 @@ class ContractDecisionReportServiceTests {
             (it.arguments[0] as AnalysisReport).apply { id = 21L }.also { report -> stored = report }
         }
 
-        val first = service.generate(run(), listOf(evidence()), emptyList(), assessment())
-        val repeated = service.generate(run(), listOf(evidence()), emptyList(), assessment())
+        val first = service.generate(run(), 50_000L, listOf(evidence()), emptyList(), assessment())
+        val repeated = service.generate(run(), 50_000L, listOf(evidence()), emptyList(), assessment())
 
         assertThat(first.created).isTrue()
         assertThat(first.view.dataMode).isEqualTo(AnalysisDataMode.DEMO)
@@ -99,6 +99,7 @@ class ContractDecisionReportServiceTests {
 
         val generated = service.generate(
             run(AnalysisDataMode.LIVE),
+            50_000L,
             listOf(evidence()),
             listOf(matchedCase),
             assessment(),
