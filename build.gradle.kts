@@ -28,6 +28,7 @@ dependencies {
     implementation("software.amazon.awssdk:ssm")
     implementation("software.amazon.awssdk:s3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.apache.poi:poi-ooxml:5.4.1")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")

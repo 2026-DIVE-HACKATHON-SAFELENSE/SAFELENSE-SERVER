@@ -43,6 +43,8 @@ class SsmEnvironmentPostProcessorTests {
         assertThat(environment.getProperty("OPENAI_API_KEY")).isEqualTo("openai-secret")
         assertThat(environment.getProperty("REGISTRY_DOCUMENT_BUCKET")).isEqualTo("registry-bucket")
         assertThat(environment.getProperty("REGISTRY_DOCUMENT_KMS_KEY_ID")).isEqualTo("kms-key")
+        assertThat(environment.getProperty("PUBLIC_DATA_SERVICE_KEY")).isEqualTo("public-data-key")
+        assertThat(environment.getProperty("VWORLD_API_KEY")).isEqualTo("vworld-key")
         assertThat(environment.propertySources.iterator().next().name).isEqualTo("ssmParameters")
     }
 
@@ -71,6 +73,8 @@ class SsmEnvironmentPostProcessorTests {
             "OPENAI_API_KEY" to "openai-secret",
             "REGISTRY_DOCUMENT_BUCKET" to "registry-bucket",
             "REGISTRY_DOCUMENT_KMS_KEY_ID" to "kms-key",
+            "PUBLIC_DATA_SERVICE_KEY" to "public-data-key",
+            "VWORLD_API_KEY" to "vworld-key",
         ).toMutableMap()
 
         override fun read(parameterNames: List<String>): Map<String, String> {

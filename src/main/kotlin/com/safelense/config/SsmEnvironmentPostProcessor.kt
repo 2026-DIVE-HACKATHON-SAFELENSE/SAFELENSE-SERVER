@@ -43,6 +43,8 @@ class SsmEnvironmentPostProcessor(
             "/safelense/prod/OPENAI_API_KEY",
             "/safelense/prod/REGISTRY_DOCUMENT_BUCKET",
             "/safelense/prod/REGISTRY_DOCUMENT_KMS_KEY_ID",
+            "/safelense/prod/PUBLIC_DATA_SERVICE_KEY",
+            "/safelense/prod/VWORLD_API_KEY",
         )
     }
 }
