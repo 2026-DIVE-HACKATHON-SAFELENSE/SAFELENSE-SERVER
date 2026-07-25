@@ -54,6 +54,8 @@ class OpenAiReportInterpreterTests {
         assertThat(interpreted.fallback).isTrue()
         assertThat(interpreted.result.summary.text).isEqualTo("규칙 요약")
         assertThat(interpreted.result.summary.evidenceIds).containsExactly("evidence-11")
+        assertThat(interpreted.result.attentionLevel).isEqualTo(AiAttentionLevel.UNKNOWN)
+        assertThat(interpreted.result.mitigationStatus).isEqualTo(AiMitigationStatus.UNKNOWN)
     }
 
     @Test

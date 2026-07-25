@@ -37,7 +37,7 @@ class OpenAiHttpReportClientTests {
             objectMapper,
         )
         val resultJson =
-            """{"summary":{"text":"가격을 확인하세요.","evidenceIds":["evidence-11"]},"residentialImpacts":[],"actionGuide":[]}"""
+            """{"summary":{"text":"가격을 확인하세요.","evidenceIds":["evidence-11"]},"attentionLevel":"CAUTION","mitigationStatus":"POSSIBLE","residentialImpacts":[],"actionGuide":[]}"""
         val responseJson =
             """{"output":[{"type":"message","content":[{"type":"output_text","text":${objectMapper.writeValueAsString(resultJson)}}]}]}"""
         server.expect(requestTo("https://api.openai.com/v1/responses"))
@@ -47,12 +47,17 @@ class OpenAiHttpReportClientTests {
             .andExpect(content().string(containsString("\"store\":false")))
             .andExpect(content().string(containsString("\"type\":\"json_schema\"")))
             .andExpect(content().string(containsString("\"strict\":true")))
+            .andExpect(content().string(containsString("\"attentionLevel\"")))
+            .andExpect(content().string(containsString("\"mitigationStatus\"")))
             .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON))
 
         val result = client.generate(request())
+        val serialized = objectMapper.writeValueAsString(result)
 
         assertThat(result.summary.text).isEqualTo("가격을 확인하세요.")
         assertThat(result.summary.evidenceIds).containsExactly("evidence-11")
+        assertThat(serialized)
+            .contains("\"attentionLevel\":\"CAUTION\"", "\"mitigationStatus\":\"POSSIBLE\"")
         server.verify()
     }
 

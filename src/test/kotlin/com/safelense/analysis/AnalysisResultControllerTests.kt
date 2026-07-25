@@ -123,6 +123,8 @@ class AnalysisResultControllerTests {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.contractSafety.grade").value("LOW"))
             .andExpect(jsonPath("$.contractSafety.score").value(20))
+            .andExpect(jsonPath("$.aiInterpretation.attentionLevel").value("UNKNOWN"))
+            .andExpect(jsonPath("$.aiInterpretation.mitigationStatus").value("UNKNOWN"))
             .andExpect(jsonPath("$.dataMode").value("DEMO"))
 
         verify(service).find(7L, 31L)

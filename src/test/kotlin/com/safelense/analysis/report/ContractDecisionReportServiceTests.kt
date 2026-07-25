@@ -5,6 +5,8 @@ import com.safelense.analysis.AnalysisRiskAssessment
 import com.safelense.analysis.AnalysisRiskGrade
 import com.safelense.analysis.evidence.CollectedEvidence
 import com.safelense.analysis.evidence.EvidenceStatus
+import com.safelense.analysis.interpretation.AiAttentionLevel
+import com.safelense.analysis.interpretation.AiMitigationStatus
 import com.safelense.analysis.interpretation.AiReportResult
 import com.safelense.analysis.interpretation.EvidenceBackedStatement
 import com.safelense.analysis.interpretation.OpenAiProperties
@@ -61,6 +63,8 @@ class ContractDecisionReportServiceTests {
         assertThat(first.view.dataMode).isEqualTo(AnalysisDataMode.DEMO)
         assertThat(first.view.contractSafety.grade).isEqualTo(AnalysisRiskGrade.UNKNOWN)
         assertThat(first.view.dataCoverage.single().source).isEqualTo("VWORLD_OFFICIAL_PRICE")
+        assertThat(first.view.aiInterpretation.attentionLevel).isEqualTo(AiAttentionLevel.CAUTION)
+        assertThat(first.view.aiInterpretation.mitigationStatus).isEqualTo(AiMitigationStatus.POSSIBLE)
         assertThat(repeated.created).isFalse()
         assertThat(repeated.view.aiInterpretation.summary.text)
             .isEqualTo(first.view.aiInterpretation.summary.text)
@@ -162,6 +166,8 @@ private class CountingReportClient : OpenAiReportClient {
         calls += 1
         return AiReportResult(
             summary = EvidenceBackedStatement("가격 근거를 확인하세요.", listOf("evidence-11")),
+            attentionLevel = AiAttentionLevel.CAUTION,
+            mitigationStatus = AiMitigationStatus.POSSIBLE,
             residentialImpacts = emptyList(),
             actionGuide = listOf(EvidenceBackedStatement("가격을 확인하세요.", listOf("evidence-11"))),
         )

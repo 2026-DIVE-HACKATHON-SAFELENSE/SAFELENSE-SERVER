@@ -14,8 +14,23 @@ data class EvidenceBackedStatement(
     var evidenceIds: List<String> = emptyList(),
 )
 
+enum class AiAttentionLevel {
+    SAFE,
+    CAUTION,
+    DANGER,
+    UNKNOWN,
+}
+
+enum class AiMitigationStatus {
+    POSSIBLE,
+    DIFFICULT,
+    UNKNOWN,
+}
+
 data class AiReportResult(
     var summary: EvidenceBackedStatement = EvidenceBackedStatement(),
+    var attentionLevel: AiAttentionLevel = AiAttentionLevel.UNKNOWN,
+    var mitigationStatus: AiMitigationStatus = AiMitigationStatus.UNKNOWN,
     var residentialImpacts: List<EvidenceBackedStatement> = emptyList(),
     var actionGuide: List<EvidenceBackedStatement> = emptyList(),
 ) {

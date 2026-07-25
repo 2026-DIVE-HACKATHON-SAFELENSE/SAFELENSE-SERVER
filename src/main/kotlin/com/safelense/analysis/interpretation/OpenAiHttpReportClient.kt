@@ -49,7 +49,7 @@ class OpenAiHttpReportClient(
             "model" to properties.model,
             "store" to false,
             "instructions" to
-                "주어진 JSON 근거와 규칙 결과만 사용하세요. 각 문장은 evidence- 또는 case- ID를 인용하고 법률 결론을 단정하지 마세요. case- 사례는 유사 대응 패턴 설명에만 사용하고 계약 안전성, 사고 확률, 보증금 반환 가능성의 근거로 사용하지 마세요.",
+                "주어진 JSON 근거와 규칙 결과만 사용하세요. 각 문장은 evidence- 또는 case- ID를 인용하고 법률 결론을 단정하지 마세요. attentionLevel과 mitigationStatus는 제공된 근거로 판단할 수 없으면 UNKNOWN으로 답하세요. case- 사례는 유사 대응 패턴 설명에만 사용하고 계약 안전성, 사고 확률, 보증금 반환 가능성의 근거로 사용하지 마세요.",
             "input" to objectMapper.writeValueAsString(request),
             "max_output_tokens" to 1200,
             "text" to mapOf(
@@ -80,6 +80,12 @@ class OpenAiHttpReportClient(
         val root = objectMapper.readTree(text)
         return AiReportResult(
             summary = root.get("summary").toStatement(),
+            attentionLevel = root.get("attentionLevel")?.asString()
+                ?.let(AiAttentionLevel::valueOf)
+                ?: throw OpenAiReportUnavailableException("MISSING_ATTENTION_LEVEL"),
+            mitigationStatus = root.get("mitigationStatus")?.asString()
+                ?.let(AiMitigationStatus::valueOf)
+                ?: throw OpenAiReportUnavailableException("MISSING_MITIGATION_STATUS"),
             residentialImpacts = root.get("residentialImpacts").toStatements(),
             actionGuide = root.get("actionGuide").toStatements(),
         )
@@ -117,10 +123,24 @@ class OpenAiHttpReportClient(
             "additionalProperties" to false,
             "properties" to mapOf(
                 "summary" to STATEMENT_SCHEMA,
+                "attentionLevel" to mapOf(
+                    "type" to "string",
+                    "enum" to AiAttentionLevel.entries.map { it.name },
+                ),
+                "mitigationStatus" to mapOf(
+                    "type" to "string",
+                    "enum" to AiMitigationStatus.entries.map { it.name },
+                ),
                 "residentialImpacts" to mapOf("type" to "array", "items" to STATEMENT_SCHEMA),
                 "actionGuide" to mapOf("type" to "array", "items" to STATEMENT_SCHEMA),
             ),
-            "required" to listOf("summary", "residentialImpacts", "actionGuide"),
+            "required" to listOf(
+                "summary",
+                "attentionLevel",
+                "mitigationStatus",
+                "residentialImpacts",
+                "actionGuide",
+            ),
         )
     }
 }

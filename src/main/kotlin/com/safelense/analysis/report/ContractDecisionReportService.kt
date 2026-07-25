@@ -5,6 +5,8 @@ import com.safelense.analysis.AnalysisRiskAssessment
 import com.safelense.analysis.AnalysisRiskGrade
 import com.safelense.analysis.evidence.CollectedEvidence
 import com.safelense.analysis.evidence.EvidenceStatus
+import com.safelense.analysis.interpretation.AiAttentionLevel
+import com.safelense.analysis.interpretation.AiMitigationStatus
 import com.safelense.analysis.interpretation.EvidenceBackedStatement
 import com.safelense.analysis.interpretation.OpenAiReportInterpreter
 import com.safelense.analysis.match.MatchedCase
@@ -39,6 +41,10 @@ data class ContractSafetyReport(
 data class AiInterpretationReport(
     @field:Schema(description = "수집 근거를 인용하는 AI 종합 해석")
     var summary: EvidenceBackedStatement = EvidenceBackedStatement(),
+    @field:Schema(description = "AI가 분류한 주의 수준", example = "CAUTION")
+    var attentionLevel: AiAttentionLevel = AiAttentionLevel.UNKNOWN,
+    @field:Schema(description = "AI가 분류한 위험 완화 가능성", example = "POSSIBLE")
+    var mitigationStatus: AiMitigationStatus = AiMitigationStatus.UNKNOWN,
     @field:Schema(description = "AI 결과 대신 규칙 기반 문구를 사용했는지 여부", example = "false")
     var fallback: Boolean = false,
 )
@@ -139,6 +145,8 @@ class ContractDecisionReportService(
             residentialImpacts = interpreted.result.residentialImpacts,
             aiInterpretation = AiInterpretationReport(
                 summary = interpreted.result.summary,
+                attentionLevel = interpreted.result.attentionLevel,
+                mitigationStatus = interpreted.result.mitigationStatus,
                 fallback = interpreted.fallback,
             ),
             actionGuide = interpreted.result.actionGuide,
