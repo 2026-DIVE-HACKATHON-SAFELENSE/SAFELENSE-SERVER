@@ -9,7 +9,11 @@ import com.safelense.analysis.match.MatchedCase
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 
+@ExtendWith(OutputCaptureExtension::class)
 class OpenAiReportInterpreterTests {
     private val properties = OpenAiProperties(
         apiKey = "test-key",
@@ -76,6 +80,23 @@ class OpenAiReportInterpreterTests {
 
         assertThat(interpreted.fallback).isFalse()
         assertThat(interpreted.result.summary.evidenceIds).containsExactly("case-101")
+    }
+
+    @Test
+    fun `logs the validation reason without model output`(output: CapturedOutput) {
+        val client = RecordingOpenAiReportClient(
+            result = AiReportResult(
+                summary = EvidenceBackedStatement("민감한 AI 원문", listOf("missing-evidence")),
+            ),
+        )
+        val interpreter = OpenAiReportInterpreter(client, ReportEvidenceValidator(), properties)
+
+        val interpreted = interpreter.interpret(listOf(evidence()), assessment(), cases())
+
+        assertThat(interpreted.fallback).isTrue()
+        assertThat(output.all)
+            .contains("OpenAI report fallback", "reason=UNKNOWN_EVIDENCE_ID")
+            .doesNotContain("민감한 AI 원문", "test-key")
     }
 
     private fun evidence() =

@@ -1,15 +1,17 @@
 // OpenAI Responses API에 엄격한 JSON Schema 해석을 요청하고 결과를 파싱하는 HTTP 어댑터
 package com.safelense.analysis.interpretation
 
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientException
+import org.springframework.web.client.RestClientResponseException
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 
-class OpenAiReportUnavailableException : RuntimeException()
+class OpenAiReportUnavailableException(val reason: String) : RuntimeException(reason)
 
 @Component
 class OpenAiHttpReportClient(
@@ -20,22 +22,26 @@ class OpenAiHttpReportClient(
     private val restClient = restClientBuilder.build()
 
     override fun generate(request: OpenAiReportRequest): AiReportResult = try {
-        val response = requireNotNull(
-            restClient.post()
-                .uri("${properties.baseUrl}/responses")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer ${properties.apiKey}")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody(request))
-                .retrieve()
-                .body(JsonNode::class.java),
-        )
+        val response = restClient.post()
+            .uri("${properties.baseUrl}/responses")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer ${properties.apiKey}")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(requestBody(request))
+            .retrieve()
+            .body(JsonNode::class.java)
+            ?: throw OpenAiReportUnavailableException("EMPTY_RESPONSE")
         parseReport(extractOutputText(response))
-    } catch (_: RestClientException) {
-        throw OpenAiReportUnavailableException()
-    } catch (_: OpenAiReportUnavailableException) {
-        throw OpenAiReportUnavailableException()
-    } catch (_: Exception) {
-        throw OpenAiReportUnavailableException()
+    } catch (exception: RestClientResponseException) {
+        logger.warn("OpenAI request failed. httpStatus={}", exception.statusCode.value())
+        throw OpenAiReportUnavailableException("HTTP_${exception.statusCode.value()}")
+    } catch (exception: RestClientException) {
+        logger.warn("OpenAI request failed. reason={}", exception.javaClass.simpleName)
+        throw OpenAiReportUnavailableException(exception.javaClass.simpleName)
+    } catch (exception: OpenAiReportUnavailableException) {
+        throw exception
+    } catch (exception: Exception) {
+        logger.warn("OpenAI response handling failed. reason={}", exception.javaClass.simpleName)
+        throw OpenAiReportUnavailableException("INVALID_RESPONSE")
     }
 
     private fun requestBody(request: OpenAiReportRequest): Map<String, Any> =
@@ -57,17 +63,17 @@ class OpenAiHttpReportClient(
         )
 
     private fun extractOutputText(response: JsonNode): String {
-        val output = response.get("output") ?: throw OpenAiReportUnavailableException()
+        val output = response.get("output") ?: throw OpenAiReportUnavailableException("MISSING_OUTPUT")
         output.forEach { item ->
             item.get("content")?.forEach { content ->
                 when (content.get("type")?.asString()) {
                     "output_text" -> return content.get("text")?.asString()
-                        ?: throw OpenAiReportUnavailableException()
-                    "refusal" -> throw OpenAiReportUnavailableException()
+                        ?: throw OpenAiReportUnavailableException("MISSING_OUTPUT_TEXT")
+                    "refusal" -> throw OpenAiReportUnavailableException("REFUSAL")
                 }
             }
         }
-        throw OpenAiReportUnavailableException()
+        throw OpenAiReportUnavailableException("MISSING_OUTPUT_CONTENT")
     }
 
     private fun parseReport(text: String): AiReportResult {
@@ -80,17 +86,20 @@ class OpenAiHttpReportClient(
     }
 
     private fun JsonNode?.toStatements(): List<EvidenceBackedStatement> =
-        this?.values()?.map { it.toStatement() } ?: throw OpenAiReportUnavailableException()
+        this?.values()?.map { it.toStatement() }
+            ?: throw OpenAiReportUnavailableException("MISSING_STATEMENTS")
 
     private fun JsonNode?.toStatement(): EvidenceBackedStatement {
-        val node = this ?: throw OpenAiReportUnavailableException()
-        val text = node.get("text")?.asString() ?: throw OpenAiReportUnavailableException()
+        val node = this ?: throw OpenAiReportUnavailableException("MISSING_STATEMENT")
+        val text = node.get("text")?.asString()
+            ?: throw OpenAiReportUnavailableException("MISSING_STATEMENT_TEXT")
         val evidenceIds = node.get("evidenceIds")?.values()?.map { it.asString() }
-            ?: throw OpenAiReportUnavailableException()
+            ?: throw OpenAiReportUnavailableException("MISSING_EVIDENCE_IDS")
         return EvidenceBackedStatement(text, evidenceIds)
     }
 
     companion object {
+        private val logger = LoggerFactory.getLogger(OpenAiHttpReportClient::class.java)
         private val STATEMENT_SCHEMA = mapOf(
             "type" to "object",
             "additionalProperties" to false,

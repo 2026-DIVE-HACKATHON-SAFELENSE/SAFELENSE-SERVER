@@ -6,6 +6,7 @@ import com.safelense.analysis.evidence.CollectedEvidence
 import com.safelense.analysis.evidence.EvidenceStatus
 import com.safelense.analysis.match.MatchedCase
 import java.time.Instant
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 data class AiEvidenceFact(
@@ -62,7 +63,13 @@ class OpenAiReportInterpreter(
             val result = client.generate(OpenAiReportRequest(facts, assessment, matchedCases))
             validator.validate(result, evidenceValues)
             InterpretedReport(result, false, properties.model)
-        } catch (_: Exception) {
+        } catch (exception: Exception) {
+            val reason = when (exception) {
+                is InvalidAiEvidenceException -> exception.reason
+                is OpenAiReportUnavailableException -> exception.reason
+                else -> exception.javaClass.simpleName
+            }
+            logger.warn("OpenAI report fallback. reason={}", reason)
             val evidenceIds = facts
                 .filter { it.status == EvidenceStatus.AVAILABLE }
                 .map { it.id }
@@ -81,4 +88,8 @@ class OpenAiReportInterpreter(
     }
 
     private fun CollectedEvidence.evidenceId(): String = "evidence-${requireNotNull(id)}"
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(OpenAiReportInterpreter::class.java)
+    }
 }

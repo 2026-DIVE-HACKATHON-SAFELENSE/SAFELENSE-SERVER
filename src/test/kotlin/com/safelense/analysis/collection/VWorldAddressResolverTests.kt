@@ -3,12 +3,16 @@ package com.safelense.analysis.collection
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 import org.springframework.http.MediaType
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
 import org.springframework.web.client.RestClient
 
+@ExtendWith(OutputCaptureExtension::class)
 class VWorldAddressResolverTests {
     @Test
     fun `resolves one road address to pnu and building query codes`() {
@@ -108,6 +112,30 @@ class VWorldAddressResolverTests {
         val result = resolver.resolve("서울특별시 중구 태평로1가 31")
 
         assertThat(result?.pnu).isEqualTo("1114010300100310000")
+        server.verify()
+    }
+
+    @Test
+    fun `logs a VWorld error code without sensitive request data`(output: CapturedOutput) {
+        val builder = RestClient.builder()
+        val server = MockRestServiceServer.bindTo(builder).build()
+        val resolver = VWorldAddressResolver(
+            builder,
+            VWorldProperties("secret-vworld-key", searchBaseUrl = "https://vworld.test/req/search"),
+        )
+        server.expect(requestTo(org.hamcrest.Matchers.any(String::class.java)))
+            .andRespond(
+                withSuccess(
+                    """{"response":{"status":"ERROR","error":{"code":"INVALID_KEY"}}}""",
+                    MediaType.APPLICATION_JSON,
+                ),
+            )
+
+        assertThat(resolver.resolve("민감한 사용자 주소")).isNull()
+
+        assertThat(output.all)
+            .contains("VWorld address search failed", "status=ERROR", "code=INVALID_KEY")
+            .doesNotContain("민감한 사용자 주소", "secret-vworld-key")
         server.verify()
     }
 

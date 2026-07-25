@@ -4,7 +4,7 @@ package com.safelense.analysis.interpretation
 import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.stereotype.Component
 
-class InvalidAiEvidenceException : RuntimeException()
+class InvalidAiEvidenceException(val reason: String) : RuntimeException(reason)
 
 @Schema(description = "수집 근거를 인용하는 리포트 문장")
 data class EvidenceBackedStatement(
@@ -26,11 +26,14 @@ data class AiReportResult(
 class ReportEvidenceValidator {
     fun validate(result: AiReportResult, allowedIds: Set<String>) {
         result.statements().forEach { statement ->
-            if (statement.text.isBlank() ||
-                statement.evidenceIds.isEmpty() ||
-                statement.evidenceIds.any { it !in allowedIds }
-            ) {
-                throw InvalidAiEvidenceException()
+            if (statement.text.isBlank()) {
+                throw InvalidAiEvidenceException("EMPTY_TEXT")
+            }
+            if (statement.evidenceIds.isEmpty()) {
+                throw InvalidAiEvidenceException("MISSING_EVIDENCE_IDS")
+            }
+            if (statement.evidenceIds.any { it !in allowedIds }) {
+                throw InvalidAiEvidenceException("UNKNOWN_EVIDENCE_ID")
             }
         }
     }
@@ -39,20 +42,20 @@ class ReportEvidenceValidator {
         validate(result, evidenceValues.keys)
         result.statements().forEach { statement ->
             if (LEGAL_JUDGMENT_TERMS.any(statement.text::contains)) {
-                throw InvalidAiEvidenceException()
+                throw InvalidAiEvidenceException("LEGAL_JUDGMENT")
             }
             if (
                 statement.evidenceIds.any { it.startsWith("case-") } &&
                 CASE_CONCLUSION_TERMS.any(statement.text::contains)
             ) {
-                throw InvalidAiEvidenceException()
+                throw InvalidAiEvidenceException("CASE_CONCLUSION")
             }
             val citedValues = statement.evidenceIds
                 .mapNotNull(evidenceValues::get)
                 .joinToString(" ")
             NUMBER.findAll(statement.text).forEach { match ->
                 if (!citedValues.contains(match.value)) {
-                    throw InvalidAiEvidenceException()
+                    throw InvalidAiEvidenceException("UNSUPPORTED_NUMBER")
                 }
             }
         }

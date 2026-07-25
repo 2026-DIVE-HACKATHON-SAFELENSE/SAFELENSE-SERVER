@@ -7,8 +7,12 @@ import com.safelense.analysis.evidence.EvidenceStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.CapturedOutput
+import org.springframework.boot.test.system.OutputCaptureExtension
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers.content
@@ -16,9 +20,11 @@ import org.springframework.test.web.client.match.MockRestRequestMatchers.header
 import org.springframework.test.web.client.match.MockRestRequestMatchers.method
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
+import org.springframework.test.web.client.response.MockRestResponseCreators.withStatus
 import org.springframework.web.client.RestClient
 import tools.jackson.databind.ObjectMapper
 
+@ExtendWith(OutputCaptureExtension::class)
 class OpenAiHttpReportClientTests {
     @Test
     fun `requests a non stored strict JSON schema response and parses output text`() {
@@ -47,6 +53,27 @@ class OpenAiHttpReportClientTests {
 
         assertThat(result.summary.text).isEqualTo("가격을 확인하세요.")
         assertThat(result.summary.evidenceIds).containsExactly("evidence-11")
+        server.verify()
+    }
+
+    @Test
+    fun `logs an OpenAI HTTP error without credentials or request data`(output: CapturedOutput) {
+        val builder = RestClient.builder()
+        val server = MockRestServiceServer.bindTo(builder).build()
+        val client = OpenAiHttpReportClient(
+            builder,
+            OpenAiProperties("secret-openai-key", "gpt-5.6", "https://api.openai.com/v1"),
+            ObjectMapper(),
+        )
+        server.expect(requestTo("https://api.openai.com/v1/responses"))
+            .andRespond(withStatus(HttpStatus.UNAUTHORIZED))
+
+        org.assertj.core.api.Assertions.assertThatThrownBy { client.generate(request()) }
+            .isInstanceOf(OpenAiReportUnavailableException::class.java)
+
+        assertThat(output.all)
+            .contains("OpenAI request failed", "httpStatus=401")
+            .doesNotContain("secret-openai-key", "50000")
         server.verify()
     }
 
