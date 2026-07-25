@@ -64,6 +64,8 @@ CREATE TABLE analysis_runs (
 
 `collected_evidence`에는 실행 ID, 근거 키, JSON 값, 출처, 원본 식별자, 기준일, 조회 시각, 신뢰도와 상태를 저장한다. `analysis_reports`에는 실행 ID 유일 키, 리포트 JSON, 규칙 버전, 프롬프트 버전과 모델을 저장한다.
 
+같은 V8에서 `home_properties`의 `uk_home_properties_user_id`를 제거하고 `(user_id, id DESC)` 인덱스를 만든다. 적용된 Flyway 마이그레이션을 다음 Task에서 변경하지 않는다.
+
 - [ ] **Step 4: 테스트를 통과시킨다.**
 
 Run: `./gradlew test --tests 'com.safelense.analysis.ContractDecisionMigrationTests'`
@@ -80,7 +82,6 @@ git commit -m "feat: 계약 전 분석 실행 저장소 추가"
 ### Task 2: 단일 내 집 모델을 여러 후보 매물 모델로 전환한다.
 
 **Files:**
-- Modify: `src/main/resources/db/migration/V8__create_contract_decision_analysis.sql`
 - Modify: `src/main/kotlin/com/safelense/property/HomeProperty.kt`
 - Modify: `src/main/kotlin/com/safelense/property/HomePropertyRepository.kt`
 - Modify: `src/main/kotlin/com/safelense/property/HomePropertyService.kt`
@@ -104,12 +105,7 @@ Run: `./gradlew test --tests 'com.safelense.property.HomePropertyControllerTests
 
 Expected: second create returns conflict.
 
-- [ ] **Step 3: V8에서 사용자 유일 제약을 제거하고 새 API를 구현한다.**
-
-```sql
-ALTER TABLE home_properties DROP CONSTRAINT uk_home_properties_user_id;
-CREATE INDEX idx_home_properties_user_id_id ON home_properties (user_id, id DESC);
-```
+- [ ] **Step 3: 새 API를 구현한다.**
 
 `HomePropertyRepository`에는 `findAllByUserIdOrderByIdDesc`와 `findByIdAndUserId`를 추가한다. 생성 요청은 `@Positive` 보증금을 요구한다. 기존 `/api/v1/me/property`는 deprecated 호환 경로로 유지한다.
 
@@ -122,7 +118,7 @@ Expected: PASS.
 - [ ] **Step 5: 커밋한다.**
 
 ```bash
-git add src/main/resources/db/migration/V8__create_contract_decision_analysis.sql src/main/kotlin/com/safelense/property src/test/kotlin/com/safelense/property
+git add src/main/kotlin/com/safelense/property src/test/kotlin/com/safelense/property
 git commit -m "feat: 여러 후보 매물 API 추가"
 ```
 
